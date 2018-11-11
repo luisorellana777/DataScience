@@ -35,7 +35,7 @@ def create_dataset(dataset, look_back=1):
 # fix random seed for reproducibility
 numpy.random.seed(7)
 # load the dataset
-dataframe = read_csv('C:/Users/Luis.O.A/Desktop/international-airline-passengers.csv', usecols=[1], sep=";", engine='python')
+dataframe = read_csv('/international-airline-passengers.csv', usecols=[1], sep=";", engine='python')
 dataset = dataframe.values
 dataset = dataset.astype('float32')
 # normalize the dataset
