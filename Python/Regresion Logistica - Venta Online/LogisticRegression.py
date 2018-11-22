@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Oct 17 15:08:50 2018
 
@@ -9,7 +8,7 @@ Dataset: https://www.kaggle.com/dragonheir/logistic-regression
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
