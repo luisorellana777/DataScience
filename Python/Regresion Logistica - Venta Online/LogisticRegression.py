@@ -14,6 +14,9 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 
+from azureml.core import Workspace, Experiment, Run
+import math, random, pickle
+
 
 class Scal:
     #Escala de -1 a 1
@@ -43,8 +46,13 @@ def transform(column):
     return col_num
 
 def init():
+
+    ws = Workspace.from_config()
+
+    experiment = Experiment(workspace = ws, name = "Experiment_RL_VentaOnline")
+    run = experiment.start_logging()
     
-    X = pd.read_csv(r"C:/Users/Luis.O.A/Documents/Charla ML/DataScience/Social_Network_Ads.csv", sep=",")
+    X = pd.read_csv(r"./Python/Regresion Logistica - Venta Online/Social_Network_Ads.csv", sep=",")
     
     Y = X.Purchased
     X = X.drop('Purchased', axis=1)
@@ -58,7 +66,9 @@ def init():
     ###########################################################################################
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = .3, random_state=25)
     
-    C_param_range = [0.001,0.01,0.1,1,10,100]
+    C_param_range = [0.001,0.01,0.1,1.0,10.0,100.0]
+
+    run.log("Parameters",C_param_range)
     
     for i in C_param_range:
         LogReg = LogisticRegression(penalty = 'l2', C = i,random_state = 0)
@@ -74,7 +84,10 @@ def init():
         print(classification_report(y_test, y_pred))
         print(accuracy_score(y_test, y_pred))
         print("------------------------------------------------------")
-        
-        
-    
+        run.log("accuracy",accuracy_score(y_test, y_pred))
+        run.log("Parametro: ", i)
+
+    run.complete()
+    print("Run completed")
+
 init()
