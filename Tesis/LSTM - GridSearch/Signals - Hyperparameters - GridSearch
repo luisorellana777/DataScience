@@ -1,0 +1,178 @@
+from __future__ import print_function
+import pandas as pd
+import numpy
+import matplotlib.pyplot as plt
+import math
+from keras.models import load_model, Model, Sequential
+from keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector
+from keras.initializers import glorot_uniform
+from keras.utils import to_categorical
+from keras.optimizers import Adam
+from keras import backend as K
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+from pandas import DataFrame
+from pandas.plotting import table
+from math import sqrt
+from joblib import Parallel, delayed
+import tensorflow as tf
+from scipy import stats
+
+
+def create_dataset(nombre_sujeto, nombre_postura):
+    PATH = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/%s/%s-%s-VE.csv"%(nombre_sujeto, nombre_sujeto, nombre_postura))
+    X = pd.read_csv(PATH, sep="	")
+    
+    # normalize the dataset
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    
+    VFSCd = scaler.fit_transform(X.VFSCd.values.reshape((len(X.VFSCd.values), 1)))
+    VFSCi = scaler.fit_transform(X.VFSCi.values.reshape((len(X.VFSCi.values), 1)))
+    PAMn = scaler.fit_transform(X.PAMn.values.reshape((len(X.PAMn.values), 1)))
+    # fix random seed for reproducibility
+    numpy.random.seed(7)
+    
+    #Dar formato float a las señales
+    PAMn, VFSCd = PAMn.astype('float32'), VFSCd.astype('float32')
+    PAMn, VFSCd = numpy.array(PAMn), numpy.array(VFSCd)
+    
+    # Validacion Valanceada
+    train_size = int(len(PAMn) * 0.5)
+    test_size = len(PAMn) - train_size
+    train_PAM, train_VFSCd = PAMn[0:train_size], VFSCd[0:train_size]
+    test_PAM, test_VFSCd = PAMn[train_size:len(PAMn)], VFSCd[train_size:len(VFSCd)]
+    
+    # Reshape segun el formato que acepta Keras
+    # reshape input to be [samples, time steps, features]
+    train_PAM = numpy.reshape(train_PAM, (train_PAM.shape[0], 1, train_PAM.shape[1]))
+    test_PAM = numpy.reshape(test_PAM, (test_PAM.shape[0], 1, test_PAM.shape[1]))
+    
+    return train_PAM, train_VFSCd, test_PAM, test_VFSCd
+    
+
+def correlation_coefficient_loss_metric(y_true, y_pred):
+    x = y_true
+    y = y_pred
+    mx = K.mean(x)
+    my = K.mean(y)
+    xm, ym = x-mx, y-my
+    r_num = K.sum(tf.multiply(xm,ym))
+    r_den = K.sqrt(tf.multiply(K.sum(K.square(xm)), K.sum(K.square(ym))))
+    r = r_num / r_den
+
+    r = K.maximum(K.minimum(r, 1.0), -1.0)
+    return 1 - K.square(r)
+
+
+# fit an LSTM network to training data
+def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons):
+    
+    model = Sequential()
+    model.add(LSTM(neurons, batch_input_shape=(batch_size, trainX.shape[1], trainX.shape[2]), stateful=True, return_sequences=True))
+    for i in range (hidden_layers-1):
+            model.add(LSTM(neurons, return_sequences=True, stateful=True))
+    model.add(Dropout(dropout))
+    model.add(Dense(1, activation=activation))
+    model.compile(loss='cosine_proximity', optimizer=optimization)
+    
+    if(epochs > 1):
+        for i in range(epochs):
+            model.fit(trainX, trainY, epochs=1, batch_size=batch_size, verbose=2, shuffle=False)
+            model.reset_states()
+    
+    return model
+
+
+#Evaluate the Model
+def evaluate(model, X, Y, batch_size):
+
+    output = model.predict(X, batch_size=batch_size)
+    # invert data transforms on forecast
+    yhat = []
+    for i in range(len(output)):
+            # store forecast
+            yhat.append(output[i,0][0])
+    # report performance
+    rmse = stats.pearsonr(Y[:,0], numpy.asarray(yhat))
+    
+    return rmse
+
+# Guardar en formato PNG los resultados
+def save_results(results, nombre_archivo_resultados):
+
+    desc = results.describe()
+    #create a subplot without frame
+    plot = plt.subplot(111, frame_on=False)
+    
+    #remove axis
+    plot.xaxis.set_visible(False) 
+    plot.yaxis.set_visible(False) 
+    
+    #create the table plot and position it in the upper left corner
+    table(plot, desc,loc='upper right')
+    
+    #save the plot as a png file
+    plt.savefig('desc_%s.png'%(nombre_archivo_resultados))
+    plt.close()
+    
+    results.boxplot()
+    plt.savefig('boxplot_%s.png'%(nombre_archivo_resultados))
+    plt.close()
+
+# run a repeated experiment
+def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons):
+    # run experiment
+    error_scores = list()
+    for r in range(repeats):
+            # fit the model
+            lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons)
+            
+            lstm_model.predict(trainX, batch_size=batch_size)
+            
+    # report performance
+    rmse = evaluate(lstm_model, testX, testY, batch_size)
+    print('batch_size=%d, epochs=%d, optimization=%s, activation=%s, dropout=%d, hidden_layers=%d, neurons=%d::::::::::: %.3f' % (batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons, rmse[0]))
+    error_scores.append(rmse[0])
+    return error_scores
+
+#QUITAR PARALEL DE ESTE METODO PARA CORRER LAS PRUEBAS
+
+def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[1], optimization=["adam"], activation=["sigmoid"], dropout=[0], hidden_layers=[1], neurons=[1]):
+
+    results = []
+    results_data_frame = DataFrame()
+    repeats = 1
+    
+    for b in batch_size:
+        for e in epochs:
+            for o in optimization:
+                for a in activation:
+                    for d in dropout:
+                        for h in hidden_layers:
+                            for n in neurons:
+                                experiment(trainX, trainY, testX, testY, repeats, b, e, o, a, d, h, n)
+    
+    for i in range(len(results)):
+        results_data_frame[str(i)] = results[i]
+    
+    # summarize results
+    #print(results);
+    #print(results_data_frame.describe())
+    # save boxplot
+    #Entrenamiento.save_results(results_data_frame, "nombre_archivo")
+
+
+def run ():
+    # fix random seed for reproducibility
+    seed = 7
+    numpy.random.seed(seed)
+    # load dataset
+    # split into input (X) and output (Y) variables
+    train_PAM, train_VFSCd, test_PAM, test_VFSCd = create_dataset("AC", "ACOSTADO")
+
+    optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+    neurons = [10,20,30,40,50,60,70,80,90,100]
+
+    run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, neurons=neurons, optimization=optimization)
+
+run()
