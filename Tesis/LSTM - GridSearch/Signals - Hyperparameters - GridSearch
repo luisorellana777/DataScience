@@ -3,7 +3,8 @@ import pandas as pd
 import numpy
 import matplotlib.pyplot as plt
 import math
-from keras.models import load_model, Model, Sequential
+from keras import Sequential
+from keras.models import load_model, Model
 from keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector
 from keras.initializers import glorot_uniform
 from keras.utils import to_categorical
@@ -16,6 +17,7 @@ from pandas.plotting import table
 from math import sqrt
 from joblib import Parallel, delayed
 import tensorflow as tf
+import gc
 from scipy import stats
 
 
@@ -94,6 +96,7 @@ def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, dropo
 def evaluate(model, X, Y, batch_size):
 
     output = model.predict(X, batch_size=batch_size)
+    
     # invert data transforms on forecast
     # report performance
     rmse = stats.pearsonr(Y[:,0], output[:,0])
@@ -125,18 +128,21 @@ def save_results(results, nombre_archivo_resultados):
 # run a repeated experiment
 def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons):
     # run experiment
-    error_scores = list()
+    best_rms = -1
     for r in range(repeats):
             # fit the model
             lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons)
-            
-            lstm_model.predict(trainX, batch_size=batch_size)
-            
-    # report performance
-    rmse = evaluate(lstm_model, testX, testY, batch_size)
-    print('batch_size=%d, epochs=%d, optimization=%s, activation=%s, dropout=%.2f, hidden_layers=%d, neurons=%d::::::::::: %.3f' % (batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons, rmse[0]))
-    error_scores.append(rmse[0])
-    return rmse[0]
+            # report performance
+            rmse = evaluate(lstm_model, testX, testY, batch_size)
+            K.clear_session()
+            del lstm_model
+            gc.collect()
+            if best_rms < rmse[0]:
+                best_rms = rmse[0]
+
+    print('batch_size=%d, epochs=%d, optimization=%s, activation=%s, dropout=%.2f, hidden_layers=%d, neurons=%d::::::::::: %.8f' % (batch_size, epochs, optimization, activation, dropout, hidden_layers, neurons, best_rms))
+
+    return best_rms
 
 #QUITAR PARALEL DE ESTE METODO PARA CORRER LAS PRUEBAS
 def convert(v):
@@ -145,15 +151,15 @@ def convert(v):
     except ValueError:
         return v
 
-def run_experiment(trainX, trainY, testX, testY, hyperparameter, batch_size=[1], epochs=[1], optimization=["adam"], activation=["sigmoid"], dropout=[0], hidden_layers=[1], neurons=[1]):
+def run_experiment(sujeto, postura, balance, trainX, trainY, testX, testY, hyperparameter, batch_size=[1], epochs=[1], optimization=["adam"], activation=["sigmoid"], dropout=[0], hidden_layers=[1], neurons=[1]):
     print("################################################################################### " + hyperparameter)
     
     columnas = ['batch_size','epochs','optimization','activation','dropout','hidden_layers','neurons','Result']
     filas = len(batch_size) * len(epochs) * len(optimization) * len(activation) * len(dropout) * len(hidden_layers) * len(neurons)
-    results = numpy.chararray((filas,8), itemsize=10)
+    results = numpy.chararray((filas,8), itemsize=20)
     results_data_frame = DataFrame()
     row = 0
-    repeats = 1
+    repeats = 10
     best_result = -1
     best_row = 0
     
@@ -179,16 +185,15 @@ def run_experiment(trainX, trainY, testX, testY, hyperparameter, batch_size=[1],
                                     best_row = row
 
                                 row = row + 1
-                                #tf.reset_default_graph()
-                                #K.clear_session()
+
     
     df = pd.DataFrame(results, columns=columnas)
     df = df.sort_values(by='Result', ascending=False)
 
-    writer = pd.ExcelWriter('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados/Sujeto_Posicion_'+hyperparameter+'.xlsx')
+    writer = pd.ExcelWriter('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados/'+sujeto+'_'+postura+'/Sujeto_Posicion_'+hyperparameter+'_'+str(balance)+'.xlsx')
     df.to_excel(writer,'Resultados')
     writer.save()
-    
+ 
     if hyperparameter == "batch_size":
         return results[best_row][0]
     if hyperparameter == "epochs":
@@ -203,20 +208,49 @@ def run_experiment(trainX, trainY, testX, testY, hyperparameter, batch_size=[1],
         return results[best_row][5]
     if hyperparameter == "neurons":
         return results[best_row][6]
-    # summarize results
-    #print(results);
-    #print(results_data_frame.describe())
-    # save boxplot
-    #Entrenamiento.save_results(results_data_frame, "nombre_archivo")
 
 
-def run ():
+
+def run (sujeto, postura, balance):
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: ' + str(balance))
     # fix random seed for reproducibility
     seed = 7
     numpy.random.seed(seed)
     # load dataset
     # split into input (X) and output (Y) variables
-    train_PAM, train_VFSCd, test_PAM, test_VFSCd = create_dataset("AC", "ACOSTADO")
+    train_PAM, train_VFSCd, test_PAM, test_VFSCd = create_dataset(sujeto, postura)
+    if balance == 2:
+        train_PAM_temp = train_PAM
+        train_PAM = test_PAM
+        test_PAM = train_PAM_temp
+        del train_PAM_temp
+        train_VFSCd_temp = train_VFSCd
+        train_VFSCd = test_VFSCd
+        test_VFSCd = train_VFSCd_temp
+        del train_VFSCd_temp
+  
+    ################################################################################### optimization
+    optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+    optimization_result = [str(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", optimization=optimization))]
+    
+    ################################################################################### activation
+    activation = ['softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+    activation_result = [str(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="activation", optimization=optimization_result, activation=activation))]
+
+    ################################################################################### dropout
+    dropout = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    dropout_result = [float(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="dropout", optimization=optimization_result, activation=activation_result, dropout=dropout))]
+
+    ################################################################################### hidden_layers
+    hidden_layers = [1, 2, 3, 4, 5]
+    hidden_layers_result = [int(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="hidden_layers", optimization=optimization_result, activation=activation_result, dropout=dropout_result, hidden_layers=hidden_layers))]
+    
+    ################################################################################### neurons
+    neurons = [10,20,30,40,50,60,70,80,90,100]
+    neurons_result = [int(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="neurons", optimization=optimization_result, activation=activation_result, dropout=dropout_result, hidden_layers=hidden_layers_result, neurons=neurons))]
 
     ################################################################################### batch_size
     batch_size = []
@@ -224,31 +258,16 @@ def run ():
         if (train_PAM.shape[0]%i)==0:
             batch_size.append(i)
 
-    batch_size_result = int(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="batch_size", batch_size=batch_size))
+    batch_size_result = [int(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="batch_size", optimization=optimization_result, activation=activation_result, dropout=dropout_result, hidden_layers=hidden_layers_result, neurons=neurons_result, batch_size=batch_size))]
 
     ################################################################################### epochs
-    epochs = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450]
-    epochs_result = int(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="epochs", batch_size=[batch_size_result], epochs=epochs))
+    epochs = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    epochs_result = [int(run_experiment(sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="epochs", optimization=optimization_result, activation=activation_result, dropout=dropout_result, hidden_layers=hidden_layers_result, neurons=neurons_result, batch_size=batch_size_result, epochs=epochs))]
 
-    ################################################################################### optimization
-    optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
-    optimization_result = str(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", batch_size=[batch_size_result], epochs=[epochs_result], optimization=optimization))
-    
-    ################################################################################### activation
-    activation = ['softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
-    activation_result = str(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="activation", batch_size=[batch_size_result], epochs=[epochs_result], optimization=[optimization_result], activation=activation))
 
-    ################################################################################### dropout
-    dropout = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    dropout_result = float(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="dropout", batch_size=[batch_size_result], epochs=[epochs_result], optimization=[optimization_result], activation=[activation_result], dropout=dropout))
-
-    ################################################################################### hidden_layers
-    hidden_layers = [1, 2, 3, 4, 5]
-    hidden_layers_result = int(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="hidden_layers", batch_size=[batch_size_result], epochs=[epochs_result], optimization=[optimization_result], activation=[activation_result], dropout=[dropout_result], hidden_layers=hidden_layers))
-    
-    ################################################################################### neurons
-    neurons = [10,20,30,40,50,60,70,80,90,100]
-    neurons_result = int(run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="neurons", batch_size=[batch_size_result], epochs=[epochs_result], optimization=[optimization_result], activation=[activation_result], dropout=[dropout_result], hidden_layers=[hidden_layers_result], neurons=neurons))
-    
-
-run()
+run(sujeto='AC', postura='ACOSTADO', balance=1)
+run(sujeto='AC', postura='ACOSTADO', balance=2)
+run(sujeto='DM', postura='PIE', balance=1)
+run(sujeto='DM', postura='PIE', balance=2)
+run(sujeto='PC', postura='SENTADO', balance=1)
+run(sujeto='PC', postura='SENTADO', balance=2)
