@@ -189,10 +189,11 @@ def run_experiment(sujeto, postura, balance, trainX, trainY, testX, testY, hyper
     
     df = pd.DataFrame(results, columns=columnas)
     df = df.sort_values(by='Result', ascending=False)
-
+    print(df)
     writer = pd.ExcelWriter('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados/'+sujeto+'_'+postura+'/Sujeto_Posicion_'+hyperparameter+'_'+str(balance)+'.xlsx')
     df.to_excel(writer,'Resultados')
     writer.save()
+    print("################################################################################### Archivo Creado")
  
     if hyperparameter == "batch_size":
         return results[best_row][0]
