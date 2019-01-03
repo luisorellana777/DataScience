@@ -25,6 +25,7 @@ import plotly.graph_objs as go
 import plotly
 from numpy.random import seed
 from tensorflow import set_random_seed
+import os
 
 
 def create_dataset(nombre_sujeto, nombre_postura):
@@ -70,12 +71,11 @@ def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidde
         ret_seq = True
 
     model = Sequential()
-    model.add(LSTM(neurons, batch_input_shape=(batch_size, trainX.shape[1], trainX.shape[2]), return_sequences=ret_seq))
-    model.add(Dropout(dropout))
+    model.add(LSTM(neurons, batch_input_shape=(batch_size, trainX.shape[1], trainX.shape[2]), return_sequences=ret_seq, stateful=True, dropout=dropout))
     for i in range (hidden_layers-1):
         if i == (hidden_layers-2):
             ret_seq = False
-        model.add(LSTM(neurons, return_sequences=ret_seq))
+        model.add(LSTM(neurons, return_sequences=ret_seq, stateful = True, dropout=dropout))
     model.add(Dense(trainY.shape[1], activation=activation))
 
     model.compile(loss='mean_squared_error', optimizer=optimization)
@@ -149,8 +149,9 @@ def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[10], op
 
     return df
 
-def best_model(df_1, df_2, sujeto, postura, emisferio):
+def best_model(df_1, df_2, ruta_archivo):
 
+    balance_extencion = "_1.csv"
     best_balance = 1
     max_df_1 = float(df_1.iat[0,7])
     max_df_2 = float(df_2.iat[0,7])
@@ -159,14 +160,15 @@ def best_model(df_1, df_2, sujeto, postura, emisferio):
     if(max_df_1<max_df_2):
         df = df_2
         best_balance = 2
+        balance_extencion = "_2.csv"
+
 
     print('++++++++++++++++++++++++++++++++++++++ Mejor Balance: ')
     print(df)
-    nombre_archivo = sujeto+'_'+postura+'_'+emisferio+'.xlsx'
-    writer = pd.ExcelWriter('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/'+nombre_archivo)
+    writer = pd.ExcelWriter(ruta_archivo+balance_extencion)
     df.to_excel(writer,'Resultados')
     writer.save()
-    print('################################################################################### Archivo |||'+nombre_archivo+'||| Creado')
+    print('################################################################################### Archivo |||'+ruta_archivo+'||| Creado')
 
     return df, best_balance
 
@@ -207,24 +209,29 @@ def plotting(r, pam, output, scaler_VFSC, scaler_escalon):
 def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon):
 
     for row in range(df.shape[0]):#Cantidad de registros en el dataframe resultados
-        batch_size = int(df.iat[row,5])
-        epochs = int(df.iat[row,0])
-        optimization = df.iat[row,3].decode("utf-8") 
-        activation = df.iat[row,2].decode("utf-8") 
-        hidden_layers = int(df.iat[row,6])
-        neurons = int(df.iat[row,4])
-        dropout = float(df.iat[row,1])
-        result_r = float(df.iat[row,7])
+        batch_size = int(df.iat[row,6])
+        epochs = int(df.iat[row,1])
+        optimization = df.iat[row,4]
+        activation = df.iat[row,3]
+        hidden_layers = int(df.iat[row,7])
+        neurons = int(df.iat[row,5])
+        #dropout = float(df.iat[row,2])
+        result_r = float(df.iat[row,8])
 
-        lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
+        for dropout in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+            lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
 
-        output = evaluate_stair(lstm_model, Escalon, batch_size)
+            output = evaluate_stair(lstm_model, Escalon, batch_size)
 
-        plotting(result_r, trainY, output, scaler_VFSC, scaler_escalon)
+            plotting(result_r, trainY, output, scaler_VFSC, scaler_escalon)
 
-        K.clear_session()
-        del lstm_model
-        gc.collect()
+            K.clear_session()
+            del lstm_model
+            gc.collect()
+
+            seguir = input("dropout=%.1f \nSeguir si(1) no(0):"%dropout)
+            if seguir == "0":
+                break
 
         seguir = input("Seguir si(1) no(0):")
         if seguir == "0":
@@ -235,49 +242,79 @@ def run (sujeto, postura):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
+    ruta_archivo = 'C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/'+sujeto+'_'+postura+'_Derecho'
+
+    exists_1 = os.path.isfile(ruta_archivo+"_1.csv")
+    exists_2 = os.path.isfile(ruta_archivo+"_2.csv")
 
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
+    
     neurons = [6,8]#[6,8,10,12,14,16,18,20,22,24,26]
 
     batch_size = []
     for i in range(1,train_PAM.shape[0]+1):
         if (train_PAM.shape[0]%i)==0:
             batch_size.append(i)
+
+    best_balance = 0
     
-    ################################################################################### Balance 1
-    print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Derecho')
+    if exists_1 == False and exists_2 == False:
+        ################################################################################### Balance 1
+        print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Derecho')
 
-    df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, batch_size=batch_size, neurons=neurons)
+        df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, batch_size=batch_size, neurons=neurons)
 
-    ################################################################################### Balance 2
-    print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Derecho')
+        ################################################################################### Balance 2
+        print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Derecho')
 
-    df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, batch_size=batch_size, neurons=neurons)
+        df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, batch_size=batch_size, neurons=neurons)
 
-    df, best_balance = best_model(df_1, df_2, sujeto, postura, 'Derecho')
+        df, best_balance = best_model(df_1, df_2, ruta_archivo)
 
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
-    if best_balance == 1:
+    if best_balance == 1 or exists_1 == True:
+
+        df = pd.read_csv('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/AC_ACOSTADO_Derecho_1.csv')
+
         apply_stair(df, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
-    else:
+
+    elif best_balance == 2 or exists_2 == True:
+
+        df = pd.read_csv('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/AC_ACOSTADO_Derecho_2.csv')
+
         apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
     ################################################################################### Balance 1
+    
+    ruta_archivo = 'C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/'+sujeto+'_'+postura+'_Izquierdo'
+
+    exists_1 = os.path.isfile(ruta_archivo+"_1.csv")
+    exists_2 = os.path.isfile(ruta_archivo+"_2.csv")
+    
     print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
-    df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, batch_size=batch_size, neurons=neurons)
+    if exists_1 == False and exists_2 == False:
+        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, batch_size=batch_size, neurons=neurons)
 
-    ################################################################################### Balance 2
-    print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Izquierdo')
+        ################################################################################### Balance 2
+        print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Izquierdo')
 
-    df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, batch_size=batch_size, neurons=neurons)
+        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, batch_size=batch_size, neurons=neurons)
 
-    df, best_balance = best_model(df_1, df_2, sujeto, postura, 'Izquierdo')
+        df, best_balance = best_model(df_1, df_2, ruta_archivo)
 
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
-    if best_balance == 1:
+
+    if best_balance == 1 or exists_1 == True:
+
+        df = pd.read_csv('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/AC_ACOSTADO_Derecho_1.csv')
+
         apply_stair(df, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
-    else:
+
+    elif best_balance == 2 or exists_2 == True:
+
+        df = pd.read_csv('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/AC_ACOSTADO_Derecho_2.csv')
+
         apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
 
 
