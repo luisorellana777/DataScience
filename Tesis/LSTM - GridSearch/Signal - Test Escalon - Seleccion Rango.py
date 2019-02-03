@@ -27,7 +27,7 @@ from numpy.random import seed
 from tensorflow import set_random_seed
 import os
 
-PATH_SUJETOS = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/Sujetos/%s/%s-%s-VE.csv")
+PATH_SUJETOS = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/SUJETOS/%s/%s-%s-VE.csv")
 PATH_ESCALON = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/ESCALON_PRESION/ESCALON.csv")
 PATH_RESULTADO = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Resultados/Escalon/%s/%s_%s")
 
