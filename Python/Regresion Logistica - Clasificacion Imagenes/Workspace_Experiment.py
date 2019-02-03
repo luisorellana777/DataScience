@@ -6,16 +6,15 @@ from azureml.core import Run, Workspace
 from azureml.core import Experiment
 
 # load workspace configuration from the config.json file in the current folder.
-def load_workspace():
-    ws = Workspace.from_config()
-    print(ws.name, ws.location, ws.resource_group, ws.location, sep = '\t')
+ws = Workspace.from_config()
 
+def load_workspace():
     return ws
 
-def load_exoeriment():
+def load_experiment():
     # create a new experiment
     experiment_name = 'MNIST_Logistic_Regression'
     
-    exp = Experiment(workspace=load_workspace(), name=experiment_name)
+    exp = Experiment(workspace=ws, name=experiment_name)
 
     return exp

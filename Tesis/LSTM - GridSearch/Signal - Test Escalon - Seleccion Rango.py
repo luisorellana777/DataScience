@@ -29,7 +29,7 @@ import os
 
 
 def create_dataset(nombre_sujeto, nombre_postura):
-    PATH_sujetos = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/%s/%s-%s-VE.csv"%(nombre_sujeto, nombre_sujeto, nombre_postura))
+    PATH_sujetos = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/%s/%s-%s-VE.csv"%("CO2_HIPERCAPNIA", nombre_sujeto, nombre_postura))
     PATH_escalon = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/esc.csv")
     X = pd.read_csv(PATH_sujetos, sep="	")
     data_escalon = pd.read_csv(PATH_escalon)
@@ -270,8 +270,8 @@ def run (sujeto, postura):
 
     
     epochs = [20,22,24,26,28,30]
-
-    batch_size = [1,train_PAM.shape[0]]
+    neurons = [6,8,10,12,14,16]
+    #optimization = ["Adagrad","Adamax"]
 
     best_balance = 0
     
@@ -279,15 +279,15 @@ def run (sujeto, postura):
         ################################################################################### Balance 1
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Derecho')
 
-        df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, batch_size=batch_size, epochs=epochs)
+        df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, neurons=neurons, epochs=epochs)
 
         ################################################################################### Balance 2
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Derecho')
 
-        df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, batch_size=batch_size, epochs=epochs)
+        df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, neurons=neurons, epochs=epochs)
 
         df, best_balance = best_model(df_1, df_2, ruta_archivo)
-
+    
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
     if best_balance == 1 or exists_1 == True:
 
@@ -301,7 +301,7 @@ def run (sujeto, postura):
 
         apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
     ################################################################################### Balance 1
-    
+"""
     ruta_archivo = 'C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/'+sujeto+'_'+postura+'_Izquierdo'
 
     exists_1 = os.path.isfile(ruta_archivo+"_1.csv")
@@ -310,12 +310,12 @@ def run (sujeto, postura):
     print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
     if exists_1 == False and exists_2 == False:
-        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, batch_size=batch_size, epochs=epochs)
+        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, neurons=neurons, epochs=epochs, optimization=optimization)
 
         ################################################################################### Balance 2
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Izquierdo')
 
-        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, batch_size=batch_size, epochs=epochs)
+        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, neurons=neurons, epochs=epochs, optimization=optimization)
 
         df, best_balance = best_model(df_1, df_2, ruta_archivo)
 
@@ -333,12 +333,11 @@ def run (sujeto, postura):
 
         apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
 
-    
+ """   
 
 
 #Repitable Experiment
-#seed(1)
-#set_random_seed(2)
+seed(1)
+set_random_seed(2)
 
-#run(sujeto='AC', postura='ACOSTADO')
-run(sujeto='CS', postura='SENTADO')
+run(sujeto='G5', postura='002')

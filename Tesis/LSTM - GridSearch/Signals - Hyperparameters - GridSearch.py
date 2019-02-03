@@ -14,6 +14,7 @@ from sklearn.metrics import mean_squared_error
 from pandas import DataFrame
 from pandas.plotting import table
 from math import sqrt, log, exp
+import math
 from joblib import Parallel, delayed
 import tensorflow as tf
 import gc
@@ -27,7 +28,7 @@ def create_dataset(nombre_sujeto, nombre_postura):
     X = pd.read_csv(PATH, sep="	")
     
     # normalize the dataset
-    scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = MinMaxScaler(feature_range=(0, 1))
     
     VFSCd = scaler.fit_transform(X.VFSCd.values.reshape((len(X.VFSCd.values), 1)))
     VFSCi = scaler.fit_transform(X.VFSCi.values.reshape((len(X.VFSCi.values), 1)))
@@ -73,18 +74,17 @@ def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidde
         ret_seq = True
 
     model = Sequential()
-    model.add(LSTM(neurons, batch_input_shape=(batch_size, trainX.shape[1], trainX.shape[2]), return_sequences=ret_seq))
-    model.add(Dropout(dropout))
+    model.add(LSTM(neurons, batch_input_shape=(batch_size, trainX.shape[1], trainX.shape[2]), return_sequences=ret_seq, stateful=True, recurrent_activation=activation, recurrent_dropout=dropout))
     for i in range (hidden_layers-1):
         if i == (hidden_layers-2):
             ret_seq = False
-        model.add(LSTM(neurons, return_sequences=ret_seq))
-    model.add(Dense(trainY.shape[1], activation=activation))
+        model.add(LSTM(neurons, return_sequences=ret_seq, stateful = True, recurrent_activation=activation, recurrent_dropout=dropout))
+    model.add(Dense(trainX.shape[1], activation=activation))
 
     model.compile(loss='mean_squared_error', optimizer=optimization)
-    
-    model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, verbose=0, shuffle=False)
-    
+    for i in range(epochs):
+        model.fit(trainX, trainY, epochs=1, batch_size=batch_size, verbose=0, shuffle=False)
+        model.reset_states()
     return model
 
 
@@ -124,17 +124,41 @@ def save_results(results, nombre_archivo_resultados):
 # run a repeated experiment
 def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout):
     # run experiment
+    lista_z = list()
+    repetir_error = 0
+    i = 1
+    del_level_hyp = False
+    while i <= repeats:
+        # fit the model
+        lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
+        # report performance
+        r = evaluate(lstm_model, testX, testY, batch_size)[0]
+        
+        if math.isnan(r) and repetir_error < 3:
+            repetir_error = repetir_error + 1
+            if repetir_error == 3:
+                del_level_hyp = True
+                break
+        else:
+            if repetir_error != 3:
+                lista_z.append(fisher_transform(r))
+            repetir_error = 0
+            i = i + 1
 
-    # fit the model
-    lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
-    # report performance
-    r = evaluate(lstm_model, testX, testY, batch_size)[0]
+        
+        K.clear_session()
+        del lstm_model
+        gc.collect()
 
-    K.clear_session()
-    del lstm_model
-    gc.collect()
-    print('epochs=%d, dropout=%.1f, activation=%s, optimization=%s neurons=%d, batch_size=%d, hidden_layers=%d:::::::::: RESULT=%.3f' % (epochs, dropout, activation, optimization, neurons, batch_size, hidden_layers, r))
-    return r
+    if del_level_hyp:
+        mean_z = float('nan')
+        mean_corr = float('nan')
+    else:
+        mean_z = reduce(lambda x, y: x + y, lista_z) / len(lista_z)
+        mean_corr = inverse_fisher_transform(mean_z)
+
+    print('epochs=%d, dropout=%.1f, activation=%s, optimization=%s neurons=%d, batch_size=%d, hidden_layers=%d:::::::::: RESULT CORR=%.3f, RESULT Z=%.3f' % (epochs, dropout, activation, optimization, neurons, batch_size, hidden_layers, mean_corr, mean_z))
+    return mean_corr, mean_z
 
 #Transfomracion de Fisher
 def fisher_transform(r):
@@ -145,14 +169,14 @@ def inverse_fisher_transform(z):
     r = (exp(2*z)-1)/(exp(2*z)+1)
     return r
 
-def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX, testY, hyperparameter, batch_size=[1], epochs=[10], optimization=["Adam"], activation=["linear"], hidden_layers=[3], neurons=[10], dropout=[1.0]):
+def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX, testY, hyperparameter, batch_size=[1], epochs=[10], optimization=["Adam"], activation=["tanh"], hidden_layers=[3], neurons=[10], dropout=[1.0]):
     print("################################################################################### " + hyperparameter)
     
-    columnas = ['epochs','dropout','activation','optimization','neurons','batch_size','hidden_layers','RESULT']
+    columnas = ['epochs','dropout','activation','optimization','neurons','batch_size','hidden_layers','CORRELATION','FISHER']
     filas = len(batch_size) * len(epochs) * len(optimization) * len(activation) * len(hidden_layers) * len(neurons) * len(dropout)
-    results = numpy.chararray((filas,8), itemsize=20)
+    results = numpy.chararray((filas,9), itemsize=40)
     row = 0
-    repeats = 1
+    repeats = 10
     best_result = -1
     best_row = 0
     
@@ -163,7 +187,7 @@ def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX,
                     for h in hidden_layers:
                         for n in neurons:
                             for d in dropout:
-                                result = experiment(trainX, trainY, testX, testY, repeats, b, e, o, a, h, n, d)
+                                mean_corr, mean_z = experiment(trainX, trainY, testX, testY, repeats, b, e, o, a, h, n, d)
                                 results[row][0] = e
                                 results[row][1] = d
                                 results[row][2] = a
@@ -171,16 +195,17 @@ def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX,
                                 results[row][4] = n
                                 results[row][5] = b
                                 results[row][6] = h
-                                results[row][7] = result
+                                results[row][7] = mean_corr
+                                results[row][8] = mean_z
                             
-                                if best_result < result:
-                                    best_result= result
+                                if best_result < mean_corr:
+                                    best_result= mean_corr
                                     best_row = row
 
                                 row = row + 1
     
     df = pd.DataFrame(results, columns=columnas)
-    df = df.sort_values(by='RESULT', ascending=False)
+    df = df.sort_values(by='CORRELATION', ascending=False)
     print(df)
     nombre_archivo = sujeto+'_'+postura+'/Sujeto_Posicion_'+hyperparameter+'_'+str(balance)+'.xlsx'
     writer = pd.ExcelWriter('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_'+experimento+'/'+nombre_archivo)
@@ -227,16 +252,17 @@ def run_rango (sujeto, postura, balance):
         del train_VFSCd_temp
     
     ################################################################################### epochs
-    epochs = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    epochs = [10, 20, 30, 40, 50]
     epochs_result = [int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="epochs", epochs=epochs))]
 
     ################################################################################### dropout
-    dropout = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]    #   1.0 es no usar dropout
-    dropout_result = [float(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="dropout", epochs=epochs_result, dropout=dropout))]
+    #dropout = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]    #   1.0 es no usar dropout
+    #dropout_result = [float(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="dropout", epochs=epochs_result, dropout=dropout))]
+    dropout_result = [1.0]
     ################################################################################### activation
     activation = ['softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
     activation_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="activation", epochs=epochs_result, dropout=dropout_result, activation=activation))]
-    
+    activation_result = ['tanh']#Es el unico que puede modelar respuesta a escalones
     ################################################################################### optimization
     optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
     optimization_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", epochs=epochs_result, dropout=dropout_result, activation=activation_result, optimization=optimization))]
@@ -282,7 +308,7 @@ def run_hiperparametro (sujeto, postura, balance):
     run_experiment('Hiperparametro', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="Base")
     
     ################################################################################### epochs
-    epochs = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    epochs = [10, 20, 30, 40, 50]
     run_experiment('Hiperparametro', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="epochs", epochs=epochs)
 
     ################################################################################### activation
@@ -311,22 +337,22 @@ def run_hiperparametro (sujeto, postura, balance):
 
 
 ############################################### POSTURA: ACOSTADO
-run_hiperparametro(sujeto='AV', postura='ACOSTADO', balance=1)
-run_hiperparametro(sujeto='AV', postura='ACOSTADO', balance=2)
+#run_rango(sujeto='AV', postura='ACOSTADO', balance=1) 
+run_rango(sujeto='AV', postura='ACOSTADO', balance=2)
 
-run_hiperparametro(sujeto='AC', postura='ACOSTADO', balance=1)
-run_hiperparametro(sujeto='AC', postura='ACOSTADO', balance=2)
+run_rango(sujeto='AC', postura='ACOSTADO', balance=1)
+run_rango(sujeto='AC', postura='ACOSTADO', balance=2)
 
 ############################################### POSTURA: PIE
-run_hiperparametro(sujeto='CC', postura='PIE', balance=1)
-run_hiperparametro(sujeto='CC', postura='PIE', balance=2)
+run_rango(sujeto='CC', postura='PIE', balance=1)
+run_rango(sujeto='CC', postura='PIE', balance=2)
 
-run_hiperparametro(sujeto='DM', postura='PIE', balance=1)
-run_hiperparametro(sujeto='DM', postura='PIE', balance=2)
+run_rango(sujeto='DM', postura='PIE', balance=1)
+run_rango(sujeto='DM', postura='PIE', balance=2)
 
 ############################################### POSTURA: SENTADO
-run_hiperparametro(sujeto='PC', postura='SENTADO', balance=1)
-run_hiperparametro(sujeto='PC', postura='SENTADO', balance=2)
+run_rango(sujeto='PC', postura='SENTADO', balance=1)
+run_rango(sujeto='PC', postura='SENTADO', balance=2)
 
-run_hiperparametro(sujeto='CS', postura='SENTADO', balance=1)
-run_hiperparametro(sujeto='CS', postura='SENTADO', balance=2)
+run_rango(sujeto='CS', postura='SENTADO', balance=1)  
+run_rango(sujeto='CS', postura='SENTADO', balance=2) 

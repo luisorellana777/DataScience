@@ -13,9 +13,10 @@ from sklearn.metrics import classification_report
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
-
+from sklearn.externals import joblib
 from azureml.core import Workspace, Experiment, Run
 import math, random, pickle
+from azureml.core.compute import ComputeTarget
 
 
 class Scal:
@@ -48,9 +49,9 @@ def transform(column):
 def init():
 
     ws = Workspace.from_config()
-
     experiment = Experiment(workspace = ws, name = "Experiment_RL_VentaOnline")
-    run = experiment.start_logging()
+    run = Run.get_context()
+    ds = ws.get_default_datastore()
     
     X = pd.read_csv(r"./Python/Regresion Logistica - Venta Online/Social_Network_Ads.csv", sep=",")
     
@@ -70,6 +71,8 @@ def init():
 
     run.log("Parameters",C_param_range)
     
+    LogReg
+
     for i in C_param_range:
         LogReg = LogisticRegression(penalty = 'l2', C = i,random_state = 0)
         LogReg.fit(X_train, y_train)
@@ -87,7 +90,8 @@ def init():
         run.log("accuracy",accuracy_score(y_test, y_pred))
         run.log("Parametro: ", i)
 
-    run.complete()
+    joblib.dump(value=LogReg, filename='./Python/Regresion Logistica - Venta Online/outputs/LogReg.pkl')
     print("Run completed")
 
+    run = experiment.submit()
 init()

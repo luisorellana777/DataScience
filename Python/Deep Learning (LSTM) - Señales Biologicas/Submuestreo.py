@@ -15,13 +15,13 @@ from matplotlib import pyplot as plt
 from scipy import signal
 
 class Signal:
-    PATH = "C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos"
+    PATH = "C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/CO2_HIPERCAPNIA"
     
     def __init__(self, filePath):
         self.filePath = filePath
         
     def reesampling(self, var):
-        x_resampled = signal.resample(var, math.ceil(var.shape[0]*1.33333333333333))
+        x_resampled = signal.resample(var, math.ceil(var.shape[0]*0.26675603217158176943699731903485))
         return x_resampled
      
     def process(self):
@@ -41,13 +41,13 @@ class Signal:
         
 def run_signal():    
     listOfFolders = os.listdir(Signal.PATH)
-    for folder in listOfFolders:
-        folderPath = Signal.PATH+"/"+folder
-        listOfFiles = os.listdir(folderPath)
-        for file in listOfFiles:
-            filePath = folderPath+"/"+file
-            signal = Signal(filePath)
-            signal.process()
+
+    folderPath = Signal.PATH
+
+    for file in listOfFolders:
+        filePath = folderPath+"/"+file
+        signal = Signal(filePath)
+        signal.process()
 
 
 class Stair:
@@ -56,7 +56,7 @@ class Stair:
         self.file_stair = file_stair
 
     def reesampling(self, var):
-        x_resampled = signal.resample(var, math.ceil(var.shape[0]*0.52977777645333333333333333333333))
+        x_resampled = signal.resample(var, math.ceil(var.shape[0]*0.26533333333333333333333333333333))#199 ==> 50%
         return x_resampled
      
     def process(self):
@@ -76,4 +76,4 @@ def run_stair():
     stair = Stair(file_stair)
     stair.process()
 
-run_stair()
+run_signal()

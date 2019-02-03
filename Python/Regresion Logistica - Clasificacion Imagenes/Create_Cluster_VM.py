@@ -4,6 +4,7 @@ from azureml.core.compute import ComputeTarget
 import os
 import Workspace_Experiment as we 
 
+ws = we.load_workspace
 # choose a name for your cluster
 batchai_cluster_name = os.environ.get("BATCHAI_CLUSTER_NAME", ws.name + "gpu")
 cluster_min_nodes = os.environ.get("BATCHAI_CLUSTER_MIN_NODES", 1)
@@ -12,8 +13,8 @@ vm_size = os.environ.get("BATCHAI_CLUSTER_SKU", "STANDARD_NC6")
 autoscale_enabled = os.environ.get("BATCHAI_CLUSTER_AUTOSCALE_ENABLED", True)
 
 
-if batchai_cluster_name in we.load_workspace.compute_targets:
-    compute_target = we.load_workspace.compute_targets[batchai_cluster_name]
+if batchai_cluster_name in ws.compute_targets:
+    compute_target = ws.compute_targets[batchai_cluster_name]
     if compute_target and type(compute_target) is BatchAiCompute:
         print('found compute target. just use it. ' + batchai_cluster_name)
 else:
