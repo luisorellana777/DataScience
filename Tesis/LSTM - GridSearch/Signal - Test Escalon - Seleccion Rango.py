@@ -27,12 +27,14 @@ from numpy.random import seed
 from tensorflow import set_random_seed
 import os
 
+PATH_SUJETOS = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/%s/%s-%s-VE.csv")
+PATH_ESCALON = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/esc.csv")
+PATH_RESULTADO = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Resultados/Escalon/%s/%s_%s")
 
 def create_dataset(nombre_sujeto, nombre_postura):
-    PATH_sujetos = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/%s/%s-%s-VE.csv"%("CO2_HIPERCAPNIA", nombre_sujeto, nombre_postura))
-    PATH_escalon = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/esc.csv")
-    X = pd.read_csv(PATH_sujetos, sep="	")
-    data_escalon = pd.read_csv(PATH_escalon)
+
+    X = pd.read_csv(PATH_SUJETOS%(nombre_sujeto, nombre_sujeto, nombre_postura), sep="	")
+    data_escalon = pd.read_csv(PATH_ESCALON)
     
     # normalize the dataset
     scaler_VFSCd = MinMaxScaler(feature_range=(0, 1))
@@ -261,10 +263,11 @@ def run (sujeto, postura):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
-    ruta_archivo = 'C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/'+sujeto+'_'+postura+'_Derecho'
+    hemisferio = "Derecho"
+    PATH_RESULTADO%(sujeto, postura, hemisferio)
 
-    exists_1 = os.path.isfile(ruta_archivo+"_1.csv")
-    exists_2 = os.path.isfile(ruta_archivo+"_2.csv")
+    exists_1 = os.path.isfile(PATH_RESULTADO+"_1.csv")
+    exists_2 = os.path.isfile(PATH_RESULTADO+"_2.csv")
 
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
@@ -286,54 +289,55 @@ def run (sujeto, postura):
 
         df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, neurons=neurons, epochs=epochs)
 
-        df, best_balance = best_model(df_1, df_2, ruta_archivo)
+        df, best_balance = best_model(df_1, df_2, PATH_RESULTADO)
     
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
     if best_balance == 1 or exists_1 == True:
 
-        df = pd.read_csv(ruta_archivo+"_1.csv", dtype='S')
+        df = pd.read_csv(PATH_RESULTADO+"_1.csv", dtype='S')
 
         apply_stair(df, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
 
     elif best_balance == 2 or exists_2 == True:
 
-        df = pd.read_csv(ruta_archivo+"_2.csv", dtype='S')
+        df = pd.read_csv(PATH_RESULTADO+"_2.csv", dtype='S')
 
         apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
     ################################################################################### Balance 1
-"""
-    ruta_archivo = 'C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_Escalon/'+sujeto+'_'+postura+'_Izquierdo'
 
-    exists_1 = os.path.isfile(ruta_archivo+"_1.csv")
-    exists_2 = os.path.isfile(ruta_archivo+"_2.csv")
+    hemisferio = "Izquierdo"
+    PATH_RESULTADO%(sujeto, postura, hemisferio)
+
+    exists_1 = os.path.isfile(PATH_RESULTADO+"_1.csv")
+    exists_2 = os.path.isfile(PATH_RESULTADO+"_2.csv")
     
     print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
     if exists_1 == False and exists_2 == False:
-        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, neurons=neurons, epochs=epochs, optimization=optimization)
+        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, neurons=neurons, epochs=epochs)
 
         ################################################################################### Balance 2
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Izquierdo')
 
-        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, neurons=neurons, epochs=epochs, optimization=optimization)
+        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, neurons=neurons, epochs=epochs)
 
-        df, best_balance = best_model(df_1, df_2, ruta_archivo)
+        df, best_balance = best_model(df_1, df_2, PATH_RESULTADO)
 
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
 
     if best_balance == 1 or exists_1 == True:
 
-        df = pd.read_csv(ruta_archivo+"_1.csv")
+        df = pd.read_csv(PATH_RESULTADO+"_1.csv")
 
         apply_stair(df, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
 
     elif best_balance == 2 or exists_2 == True:
 
-        df = pd.read_csv(ruta_archivo+"_2.csv")
+        df = pd.read_csv(PATH_RESULTADO+"_2.csv")
 
         apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
 
- """   
+    
 
 
 #Repitable Experiment
