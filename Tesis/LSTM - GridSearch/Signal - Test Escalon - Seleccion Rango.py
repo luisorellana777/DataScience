@@ -208,7 +208,7 @@ def plotting(r, escalon, output, scaler_VFSC, scaler_escalon):
     py.plot(fig, filename = "LSTM VFSC")
 
 
-def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon):
+def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
 
     for row in range(df.shape[0]):#Cantidad de registros en el dataframe resultados
         batch_size = int(df.iat[row,6])
@@ -219,9 +219,6 @@ def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon):
         neurons = int(df.iat[row,5])
         #dropout = float(df.iat[row,2])
         result_r = float(df.iat[row,8])
-
-        opcion = ""
-        seguir = ""
         
         for dropout in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
 
@@ -240,6 +237,12 @@ def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon):
 
                 plotting(result_r, Escalon, output, scaler_VFSC, scaler_escalon)
 
+                quedar = input("¿Te quedas con esta? \nSi(1) \nNo(0) \n")
+            
+                if quedar == "1":
+                    get_hidden_states(lstm_model, neurons, layer=0, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
+                    get_hidden_states(lstm_model, neurons, layer=1, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
+
                 K.clear_session()
                 del lstm_model
                 gc.collect()
@@ -255,7 +258,46 @@ def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon):
             if opcion == "2" or seguir == "2":
                 break
 
+def get_hidden_states(model, units, layer, sujeto, postura, hemisferio):
+    W = model.layers[layer].get_weights()[0]
+    U = model.layers[layer].get_weights()[1]
+    b = model.layers[layer].get_weights()[2]
+    
+    W_i = W[:, :units]
+    W_f = W[:, units: units * 2]
+    W_c = W[:, units * 2: units * 3]
+    W_o = W[:, units * 3:]
 
+    U_i = U[:, :units]
+    U_f = U[:, units: units * 2]
+    U_c = U[:, units * 2: units * 3]
+    U_o = U[:, units * 3:]
+
+    b_i = b[:units]
+    b_f = b[units: units * 2]
+    b_c = b[units * 2: units * 3]
+    b_o = b[units * 3:]
+
+    # Create some Pandas dataframes from some data.
+    if layer == 0:
+        df1 = pd.DataFrame({'W_i': W_i.reshape(units,1).tolist(), 'W_f': W_f.reshape(units,1).tolist(), 'W_c': W_c.reshape(units,1).tolist(), 'W_o': W_o.reshape(units,1).tolist()})
+        df2 = pd.DataFrame({'U_i': U_i.reshape(units*units,1).tolist(), 'U_f': U_f.reshape(units*units,1).tolist(), 'U_c': U_c.reshape(units*units,1).tolist(), 'U_o': U_o.reshape(units*units,1).tolist()})
+        df3 = pd.DataFrame({'b_i': b_i.reshape(units,1).tolist(), 'b_f': b_f.reshape(units,1).tolist(), 'b_c': b_c.reshape(units,1).tolist(), 'b_o': b_o.reshape(units,1).tolist()})
+    else:
+        df1 = pd.DataFrame({'W_i': W_i.reshape(units*units,1).tolist(), 'W_f': W_f.reshape(units*units,1).tolist(), 'W_c': W_c.reshape(units*units,1).tolist(), 'W_o': W_o.reshape(units*units,1).tolist()})
+        df2 = pd.DataFrame({'U_i': U_i.reshape(units*units,1).tolist(), 'U_f': U_f.reshape(units*units,1).tolist(), 'U_c': U_c.reshape(units*units,1).tolist(), 'U_o': U_o.reshape(units*units,1).tolist()})
+        df3 = pd.DataFrame({'b_i': b_i.reshape(units,1).tolist(), 'b_f': b_f.reshape(units,1).tolist(), 'b_c': b_c.reshape(units,1).tolist(), 'b_o': b_o.reshape(units,1).tolist()})
+
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_layer_'+str(layer)+'.xlsx')
+
+    # Write each dataframe to a different worksheet.
+    df1.to_excel(writer, sheet_name='Kernel')
+    df2.to_excel(writer, sheet_name='Recurrent Kernel')
+    df3.to_excel(writer, sheet_name='Bias')
+
+    # Close the Pandas Excel writer and output the Excel file.
+    writer.save()
 
 
 def run (sujeto, postura):
@@ -264,10 +306,10 @@ def run (sujeto, postura):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
     hemisferio = "Derecho"
-    PATH_RESULTADO%(sujeto, postura, hemisferio)
+    PATH_RESULTADO_CONTEXTO = PATH_RESULTADO%(sujeto, postura, hemisferio)
 
-    exists_1 = os.path.isfile(PATH_RESULTADO+"_1.csv")
-    exists_2 = os.path.isfile(PATH_RESULTADO+"_2.csv")
+    exists_1 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_1.csv")
+    exists_2 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_2.csv")
 
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
@@ -289,27 +331,27 @@ def run (sujeto, postura):
 
         df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, neurons=neurons, epochs=epochs)
 
-        df, best_balance = best_model(df_1, df_2, PATH_RESULTADO)
+        df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
     
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
     if best_balance == 1 or exists_1 == True:
 
-        df = pd.read_csv(PATH_RESULTADO+"_1.csv", dtype='S')
+        df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_1.csv", dtype='S')
 
-        apply_stair(df, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
+        apply_stair(df, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
 
     elif best_balance == 2 or exists_2 == True:
 
-        df = pd.read_csv(PATH_RESULTADO+"_2.csv", dtype='S')
+        df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_2.csv", dtype='S')
 
-        apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon)
+        apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
     ################################################################################### Balance 1
-
+    """
     hemisferio = "Izquierdo"
-    PATH_RESULTADO%(sujeto, postura, hemisferio)
+    PATH_RESULTADO_CONTEXTO = PATH_RESULTADO%(sujeto, postura, hemisferio)
 
-    exists_1 = os.path.isfile(PATH_RESULTADO+"_1.csv")
-    exists_2 = os.path.isfile(PATH_RESULTADO+"_2.csv")
+    exists_1 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_1.csv")
+    exists_2 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_2.csv")
     
     print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
@@ -321,22 +363,22 @@ def run (sujeto, postura):
 
         df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, neurons=neurons, epochs=epochs)
 
-        df, best_balance = best_model(df_1, df_2, PATH_RESULTADO)
+        df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
 
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
 
     if best_balance == 1 or exists_1 == True:
 
-        df = pd.read_csv(PATH_RESULTADO+"_1.csv")
+        df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_1.csv")
 
-        apply_stair(df, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
+        apply_stair(df, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
 
     elif best_balance == 2 or exists_2 == True:
 
-        df = pd.read_csv(PATH_RESULTADO+"_2.csv")
+        df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_2.csv")
 
-        apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon)
-
+        apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
+    """
     
 
 
@@ -344,4 +386,4 @@ def run (sujeto, postura):
 seed(1)
 set_random_seed(2)
 
-run(sujeto='G5', postura='002')
+run(sujeto='AC', postura='ACOSTADO')
