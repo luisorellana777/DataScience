@@ -208,7 +208,7 @@ def plotting(r, escalon, output, scaler_VFSC, scaler_escalon):
     py.plot(fig, filename = "LSTM VFSC")
 
 
-def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
+def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
 
     for row in range(df.shape[0]):#Cantidad de registros en el dataframe resultados
         batch_size = int(df.iat[row,6])
@@ -233,16 +233,17 @@ def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon, sujeto
 
                 lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
 
-                output = evaluate_stair(lstm_model, Escalon, batch_size)
+                output = evaluate_stair(lstm_model, escalon, batch_size)
 
-                plotting(result_r, Escalon, output, scaler_VFSC, scaler_escalon)
+                plotting(result_r, escalon, output, scaler_VFSC, scaler_escalon)
 
                 quedar = input("¿Te quedas con esta? \nSi(1) \nNo(0) \n")
             
                 if quedar == "1":
-                    get_hidden_states(lstm_model, neurons, layer=0, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
-                    get_hidden_states(lstm_model, neurons, layer=1, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
-
+                    save_hidden_states(lstm_model, neurons, layer=0, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
+                    save_hidden_states(lstm_model, neurons, layer=1, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
+                    save_signal(output, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
+                    #save_hidden_output(lstm_model, escalon, sujeto, postura, hemisferio)
                 K.clear_session()
                 del lstm_model
                 gc.collect()
@@ -258,7 +259,23 @@ def apply_stair(df, trainX, trainY, Escalon, scaler_VFSC, scaler_escalon, sujeto
             if opcion == "2" or seguir == "2":
                 break
 
-def get_hidden_states(model, units, layer, sujeto, postura, hemisferio):
+def save_signal(output, sujeto, postura, hemisferio):
+    df = pd.DataFrame({'Output': output.tolist()})
+    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_output.xlsx')
+    df.to_excel(writer, sheet_name='Output')
+    writer.save()
+
+def save_hidden_output(model, escalon, sujeto, postura, hemisferio):
+    intermediate_layer_model = Model(inputs=model.layers[0].input,
+                                 outputs=model.layers[0].output)
+    intermediate_output = intermediate_layer_model.predict(escalon)
+    df = pd.DataFrame({'Output': intermediate_output})
+    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_output_hidden_layer.xlsx')
+    df.to_excel(writer, sheet_name='Kernel')
+    writer.save()
+
+
+def save_hidden_states(model, units, layer, sujeto, postura, hemisferio):
     W = model.layers[layer].get_weights()[0]
     U = model.layers[layer].get_weights()[1]
     b = model.layers[layer].get_weights()[2]
