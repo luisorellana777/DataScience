@@ -123,7 +123,7 @@ def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[20], op
     
     columnas = ['epochs','dropout','activation','optimization','neurons','batch_size','hidden_layers','RESULT']
     filas = len(batch_size) * len(epochs) * len(optimization) * len(activation) * len(hidden_layers) * len(neurons) * len(dropout)
-    results = numpy.chararray((filas,8), itemsize=20)
+    results = numpy.chararray((filas,8), itemsize=20, unicode=True)
     row = 0
     repeats = 1
     
@@ -167,7 +167,7 @@ def best_model(df_1, df_2, ruta_archivo):
 
     print('++++++++++++++++++++++++++++++++++++++ Mejor Balance: ')
     print(df)
-    writer = df.to_csv(ruta_archivo+balance_extencion, encoding='utf-8')
+    df.to_csv(ruta_archivo+balance_extencion, index=False)
     #df.to_excel(writer,'Resultados')
     #writer.save()
     print('################################################################################### Archivo |||'+ruta_archivo+'||| Creado')
@@ -211,14 +211,14 @@ def plotting(r, escalon, output, scaler_VFSC, scaler_escalon):
 def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
 
     for row in range(df.shape[0]):#Cantidad de registros en el dataframe resultados
-        batch_size = int(df.iat[row,6])
-        epochs = int(df.iat[row,1])
-        optimization = df.iat[row,4]
-        activation = df.iat[row,3]
-        hidden_layers = int(df.iat[row,7])
-        neurons = int(df.iat[row,5])
-        #dropout = float(df.iat[row,2])
-        result_r = float(df.iat[row,8])
+        batch_size = int(df.iat[row,5])
+        epochs = int(df.iat[row,0])
+        optimization = df.iat[row,3]
+        activation = df.iat[row,2]
+        hidden_layers = int(df.iat[row,6])
+        neurons = int(df.iat[row,4])
+        #dropout = float(df.iat[row,1])
+        result_r = float(df.iat[row,7])
         
         for dropout in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
 
@@ -260,10 +260,9 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
                 break
 
 def save_signal(output, sujeto, postura, hemisferio):
-    df = pd.DataFrame({'Output': output.tolist()})
-    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_output.xlsx')
-    df.to_excel(writer, sheet_name='Output')
-    writer.save()
+
+    df = pd.DataFrame(output.tolist(), columns=['Output'])
+    df.to_csv(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_output.csv',index=False)
 
 def save_hidden_output(model, escalon, sujeto, postura, hemisferio):
     intermediate_layer_model = Model(inputs=model.layers[0].input,
@@ -295,18 +294,26 @@ def save_hidden_states(model, units, layer, sujeto, postura, hemisferio):
     b_c = b[units * 2: units * 3]
     b_o = b[units * 3:]
 
+    column_W = ['W_i', 'W_f', 'W_c', 'W_o']
+    column_U = ['U_i', 'U_f', 'U_c', 'U_o']
+    column_b = ['b_i', 'b_f', 'b_c', 'b_o']
     # Create some Pandas dataframes from some data.
     if layer == 0:
-        df1 = pd.DataFrame({'W_i': W_i.reshape(units,1).tolist(), 'W_f': W_f.reshape(units,1).tolist(), 'W_c': W_c.reshape(units,1).tolist(), 'W_o': W_o.reshape(units,1).tolist()})
-        df2 = pd.DataFrame({'U_i': U_i.reshape(units*units,1).tolist(), 'U_f': U_f.reshape(units*units,1).tolist(), 'U_c': U_c.reshape(units*units,1).tolist(), 'U_o': U_o.reshape(units*units,1).tolist()})
-        df3 = pd.DataFrame({'b_i': b_i.reshape(units,1).tolist(), 'b_f': b_f.reshape(units,1).tolist(), 'b_c': b_c.reshape(units,1).tolist(), 'b_o': b_o.reshape(units,1).tolist()})
-    else:
-        df1 = pd.DataFrame({'W_i': W_i.reshape(units*units,1).tolist(), 'W_f': W_f.reshape(units*units,1).tolist(), 'W_c': W_c.reshape(units*units,1).tolist(), 'W_o': W_o.reshape(units*units,1).tolist()})
-        df2 = pd.DataFrame({'U_i': U_i.reshape(units*units,1).tolist(), 'U_f': U_f.reshape(units*units,1).tolist(), 'U_c': U_c.reshape(units*units,1).tolist(), 'U_o': U_o.reshape(units*units,1).tolist()})
-        df3 = pd.DataFrame({'b_i': b_i.reshape(units,1).tolist(), 'b_f': b_f.reshape(units,1).tolist(), 'b_c': b_c.reshape(units,1).tolist(), 'b_o': b_o.reshape(units,1).tolist()})
 
+        data_W_i = list(zip(W_i.reshape(units,1).tolist(), W_f.reshape(units,1).tolist(), W_c.reshape(units,1).tolist(), W_o.reshape(units,1).tolist()))
+        data_U_i = list(zip(U_i.reshape(units*units,1).tolist(), U_f.reshape(units*units,1).tolist(), U_c.reshape(units*units,1).tolist(), U_o.reshape(units*units,1).tolist()))
+        data_b_i = list(zip(b_i.reshape(units,1).tolist(), b_f.reshape(units,1).tolist(), b_c.reshape(units,1).tolist(), b_o.reshape(units,1).tolist()))
+    else:
+
+        data_W_i = list(zip(W_i.reshape(units*units,1).tolist(), W_f.reshape(units*units,1).tolist(), W_c.reshape(units*units,1).tolist(), W_o.reshape(units*units,1).tolist()))
+        data_U_i = list(zip(U_i.reshape(units*units,1).tolist(), U_f.reshape(units*units,1).tolist(), U_c.reshape(units*units,1).tolist(),  U_o.reshape(units*units,1).tolist()))
+        data_b_i = list(zip(b_i.reshape(units,1).tolist(), b_f.reshape(units,1).tolist(), b_c.reshape(units,1).tolist(), b_o.reshape(units,1).tolist()))
+
+    df1 = pd.DataFrame(data_W_i, columns=column_W)
+    df2 = pd.DataFrame(data_U_i, columns=column_U)
+    df3 = pd.DataFrame(data_b_i, columns=column_b)
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_layer_'+str(layer)+'.xlsx')
+    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_layer_'+str(layer)+'.xlsx',index=False)
 
     # Write each dataframe to a different worksheet.
     df1.to_excel(writer, sheet_name='Kernel')
@@ -331,8 +338,8 @@ def run (sujeto, postura):
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
     
-    epochs = [20,22,24,26,28,30]
-    neurons = [6,8,10,12,14,16]
+    epochs = [20,22]#[20,22,24,26,28,30]
+    neurons = [6,8]#[6,8,10,12,14,16]
     #optimization = ["Adagrad","Adamax"]
 
     best_balance = 0
@@ -363,7 +370,7 @@ def run (sujeto, postura):
 
         apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
     ################################################################################### Balance 1
-    """
+"""    
     hemisferio = "Izquierdo"
     PATH_RESULTADO_CONTEXTO = PATH_RESULTADO%(sujeto, postura, hemisferio)
 
@@ -403,4 +410,4 @@ def run (sujeto, postura):
 seed(1)
 set_random_seed(2)
 
-run(sujeto='AC', postura='ACOSTADO')
+run(sujeto='AP', postura='ACOSTADO')
