@@ -13173,15 +13173,15 @@ AAAAHCjLAAAAgANlGQAAAHCgLAMAAAAOlGUAAADA4Qvx0HpN5DcTBQAAAABJRU5ErkJggg==
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">labels</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Survived&quot;</span><span class="p">]</span>
-<span class="n">values</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Fare&quot;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">labels_Survived</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Survived&quot;</span><span class="p">]</span>
+<span class="n">values_Fare</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Fare&quot;</span><span class="p">]</span>
 
-<span class="n">trace</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Pie</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+<span class="n">trace_Fare</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Pie</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">labels_Survived</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values_Fare</span><span class="p">)</span>
 
-<span class="n">py</span><span class="o">.</span><span class="n">iplot</span><span class="p">([</span><span class="n">trace</span><span class="p">],</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Survived_pie_chart&#39;</span><span class="p">)</span>
+<span class="n">py</span><span class="o">.</span><span class="n">iplot</span><span class="p">([</span><span class="n">trace_Fare</span><span class="p">],</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Fare_pie_chart&#39;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -13194,12 +13194,12 @@ AAAAHCjLAAAAgANlGQAAAHCgLAMAAAAOlGUAAADA4Qvx0HpN5DcTBQAAAABJRU5ErkJggg==
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[7]:</div>
+<div class="prompt output_prompt">Out[10]:</div>
 
 
 
 <div class="output_html rendered_html output_subarea output_execute_result">
-<iframe id="igraph" scrolling="no" style="border:none;" seamless="seamless" src="https://plot.ly/~luis.orellana777/54.embed" height="525px" width="100%"></iframe>
+<iframe id="igraph" scrolling="no" style="border:none;" seamless="seamless" src="https://plot.ly/~luis.orellana777/58.embed" height="525px" width="100%"></iframe>
 </div>
 
 </div>
@@ -13518,15 +13518,15 @@ Debido a que el valor de chi es mayor a 3.84 y el valor de p es menor a 0.003, h
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">labels</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Sex&quot;</span><span class="p">]</span>
-<span class="n">values</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Survived&quot;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">labels_Sex</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Sex&quot;</span><span class="p">]</span>
+<span class="n">values_Survived</span> <span class="o">=</span> <span class="n">pass_df</span><span class="p">[</span><span class="s2">&quot;Survived&quot;</span><span class="p">]</span>
 
-<span class="n">trace</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Pie</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+<span class="n">trace_Sex</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Pie</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">labels_Sex</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values_Survived</span><span class="p">)</span>
 
-<span class="n">py</span><span class="o">.</span><span class="n">iplot</span><span class="p">([</span><span class="n">trace</span><span class="p">],</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Sex_pie_chart&#39;</span><span class="p">)</span>
+<span class="n">py</span><span class="o">.</span><span class="n">iplot</span><span class="p">([</span><span class="n">trace_Sex</span><span class="p">],</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Sex_pie_chart&#39;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -13539,7 +13539,7 @@ Debido a que el valor de chi es mayor a 3.84 y el valor de p es menor a 0.003, h
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[8]:</div>
+<div class="prompt output_prompt">Out[11]:</div>
 
 
 
