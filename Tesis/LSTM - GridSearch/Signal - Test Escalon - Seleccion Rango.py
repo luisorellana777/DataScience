@@ -345,8 +345,8 @@ def run (sujeto, postura, proceso_escalon):
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
     
-    epochs = [20,22]#[20,22,24,26,28,30]
-    neurons = [6]#[6,8,10,12,14,16]
+    epochs = [20,22,24,26,28,30]
+    neurons = [6,8,10,12,14,16]
     #optimization = ["Adagrad","Adamax"]
 
     best_balance = 0
