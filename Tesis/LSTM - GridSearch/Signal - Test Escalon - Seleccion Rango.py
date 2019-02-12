@@ -220,16 +220,23 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
         #dropout = float(df.iat[row,1])
         result_r = float(df.iat[row,7])
         
+        if hemisferio == "Izquierdo":
+            pregunta_seguir = "¿Finalizar (3)?\n"
+        else:
+            pregunta_seguir = "¿Seguir con el Otro Hemisferio (3)?\n"
+
         for dropout in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
 
             for execution in range(1,10):
 
-                opcion = input("Ejecucion %d. \n¿Deseas continuar? (0) \n¿Deseas Cambiar DropOut? (1) \n¿Deseas Probar Con Otros Hiperparametros (2)?\n"%execution)
+                opcion = input("Ejecucion %d. \nHemisferio %s. \n¿Deseas continuar? (0) \n¿Deseas Cambiar DropOut? (1) \n¿Deseas Probar Con Otros Hiperparametros (2)?\n%s"%(execution,hemisferio,pregunta_seguir))
             
                 if opcion == "1":
                     break
                 elif opcion == "2":
                     break
+                elif opcion == "3":
+                    return
 
                 lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
 
@@ -324,7 +331,7 @@ def save_hidden_states(model, units, layer, sujeto, postura, hemisferio):
     writer.save()
 
 
-def run (sujeto, postura):
+def run (sujeto, postura, proceso_escalon):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -339,7 +346,7 @@ def run (sujeto, postura):
 
     
     epochs = [20,22]#[20,22,24,26,28,30]
-    neurons = [6,8]#[6,8,10,12,14,16]
+    neurons = [6]#[6,8,10,12,14,16]
     #optimization = ["Adagrad","Adamax"]
 
     best_balance = 0
@@ -356,21 +363,22 @@ def run (sujeto, postura):
         df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, neurons=neurons, epochs=epochs)
 
         df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
-    
-    ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
-    if best_balance == 1 or exists_1 == True:
+
+    if (best_balance == 1 or exists_1 == True) and proceso_escalon == True:
 
         df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_1.csv", dtype='S')
 
         apply_stair(df, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
 
-    elif best_balance == 2 or exists_2 == True:
+    elif (best_balance == 2 or exists_2 == True) and proceso_escalon == True:
 
         df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_2.csv", dtype='S')
 
         apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
+    
+    ########################################################################################## HEMISFERIO IZQUIERDO
     ################################################################################### Balance 1
-"""    
+    
     hemisferio = "Izquierdo"
     PATH_RESULTADO_CONTEXTO = PATH_RESULTADO%(sujeto, postura, hemisferio)
 
@@ -390,19 +398,19 @@ def run (sujeto, postura):
         df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
 
     ########################################################################################## ENTRENAR MODELO A PARTIR DE "df" Y GRAFICAR RESPUESTA  ESCALON
-
-    if best_balance == 1 or exists_1 == True:
+    
+    if (best_balance == 1 or exists_1 == True) and proceso_escalon == True:
 
         df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_1.csv")
 
         apply_stair(df, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
 
-    elif best_balance == 2 or exists_2 == True:
+    elif (best_balance == 2 or exists_2 == True) and proceso_escalon == True:
 
         df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_2.csv")
 
         apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
-    """
+    
     
 
 
@@ -410,4 +418,4 @@ def run (sujeto, postura):
 seed(1)
 set_random_seed(2)
 
-run(sujeto='AP', postura='ACOSTADO')
+run(sujeto='AC', postura='ACOSTADO', proceso_escalon = False)
