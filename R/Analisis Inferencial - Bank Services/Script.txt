@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 install.packages('fifer', dep = TRUE)
 library(fifer)
 install.packages('fifer', dep = TRUE)
@@ -104,6 +105,113 @@ tbl = table(job, y)
 
 chisq.post.hoc(tbl, control = "bonferroni")
 
+=======
+install.packages('fifer', dep = TRUE)
+library(fifer)
+install.packages('fifer', dep = TRUE)
+library(randomForest)
+install.packages('party', dep = TRUE)
+library(party)
+install.packages('MASS', dep = TRUE)
+library(MASS)
+
+
+
+RUTA_DATASET <- "C:/Users/Luis.O.A/Documents/USACH/Analisis de Datos"
+
+setwd(RUTA_DATASET)
+
+data=read.csv("bank-additional-full.csv", sep=';')
+
+data= na.omit(data)
+
+summary(data)
+
+#Numerica: boxplot()
+#Categorica: barplot(prop.table(table()))
+
+boxplot(data$age, xlab ="age")
+
+barplot(prop.table(table(data$job)), xlab ="job")
+barplot(prop.table(table(data$marital)), xlab ="marital")
+barplot(prop.table(table(data$education)), xlab ="education")
+barplot(prop.table(table(data$default)), xlab ="default")
+barplot(prop.table(table(data$housing)), xlab ="housing")
+barplot(prop.table(table(data$loan)), xlab ="loan")
+barplot(prop.table(table(data$contact)), xlab ="contact")
+barplot(prop.table(table(data$month)), xlab ="month")
+barplot(prop.table(table(data$day_of_week)), xlab ="day_of_week")
+
+boxplot(data$duration[data$y == "no"], xlab ="duration")
+boxplot(data$duration[data$y == "yes"], xlab ="duration")
+hist(data$duration[data$y == "no"])
+hist(data$duration[data$y == "yes"])
+
+boxplot(data$campaign, xlab ="campaign")
+boxplot(data$pdays, xlab ="pdays")
+boxplot(data$previous, xlab ="previous")
+
+barplot(prop.table(table(data$poutcome)), xlab ="poutcome")
+
+boxplot(data$emp.var.rate, xlab ="emp.var.rate")
+boxplot(data$cons.price.idx, xlab ="cons.price.idx,")
+boxplot(data$cons.conf.idx, xlab ="cons.conf.idx")
+boxplot(data$euribor3m, xlab ="euribor3m")
+boxplot(data$nr.employed, xlab ="nr.employed")
+
+barplot(prop.table(table(data$y)), xlab ="y")
+
+#Estadistica Inferencial
+#Distribucion de Probabilidades: 
+hist(data$age)
+
+
+#chi cuadrado variable AGE
+data$age = cut(data$age, c(17, 25, 60, 100), c('juvenil','adultez','vejez'))
+
+tbl = table(data$age, data$y)
+chisq.test(tbl)
+		  
+#post hoc
+tbl = table(age, y)
+
+chisq.post.hoc(tbl, control = "bonferroni")
+
+##################################GINI
+model <- randomForest(y ~ ., data = data, importance=TRUE, proximity=TRUE, ntree=1000)
+
+model
+
+round(importance(model), 2)
+
+varImpPlot(model)
+
+
+#chi cuadrado variable DURATION
+media = (mean(data$duration[data$y == "yes"]) + mean(data$duration[data$y == "no"]))/2
+
+
+data$duration = cut(data$duration, c(0, media, max(data$duration)), c('corta','larga'))
+barplot(prop.table(table(data$duration)), xlab ="duration")
+
+tbl = table(data$duration, data$y)
+chisq.test(tbl)
+		  
+#post hoc
+tbl = table(duration, y)
+
+chisq.post.hoc(tbl, control = "bonferroni")
+
+#chi cuadrado variable JOB
+tbl = table(data$job, data$y)
+chisq.test(tbl)
+		  
+#post hoc
+tbl = table(job, y)
+
+chisq.post.hoc(tbl, control = "bonferroni")
+
+>>>>>>> 4966aae922150d281e7f47d431009d8054258bc0
 =======
 install.packages('fifer', dep = TRUE)
 library(fifer)
