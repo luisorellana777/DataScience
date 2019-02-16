@@ -95,7 +95,7 @@ def evaluate(model, X, Y, batch_size):
     # report performance
     rmse = stats.pearsonr(Y[:,0], output[:,0])
     
-    return rmse[0], output
+    return rmse[0]
 
     #Evaluate the Model
 def evaluate_stair(model, Escalon, batch_size):
@@ -111,7 +111,7 @@ def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimi
     # fit the model
     lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
     # report performance
-    r, output = evaluate(lstm_model, testX, testY, batch_size)
+    r = evaluate(lstm_model, testX, testY, batch_size)
 
     K.clear_session()
     del lstm_model
