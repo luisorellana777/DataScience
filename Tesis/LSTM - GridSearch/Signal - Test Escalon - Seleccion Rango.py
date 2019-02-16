@@ -29,7 +29,8 @@ import os
 
 PATH_SUJETOS = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/SUJETOS/%s/%s-%s-VE.csv")
 PATH_ESCALON = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/ESCALON_PRESION/ESCALON.csv")
-PATH_RESULTADO = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Resultados/Escalon/%s/%s_%s")
+PATH_RESULTADO = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Resultados/Escalon/%s")
+PATH_RESULTADO_ESCALON = (PATH_RESULTADO%("%s/%s_%s"))
 
 def create_dataset(nombre_sujeto, nombre_postura):
 
@@ -252,7 +253,7 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
                     save_hidden_states(lstm_model, neurons, layer=0, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     save_hidden_states(lstm_model, neurons, layer=1, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     save_signal(scaler_VFSC.inverse_transform(output), sujeto=sujeto, postura=postura, hemisferio=hemisferio)
-
+                    save_model(lstm_model, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     #save_hidden_output(lstm_model, escalon, sujeto, postura, hemisferio)
                 K.clear_session()
                 del lstm_model
@@ -272,17 +273,28 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
 
                 break
 
+def save_model(model, sujeto, postura, hemisferio):
+    directory = PATH_RESULTADO%(sujeto)+'/models'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    model_json = model.to_json()
+    with open(directory+"/model_"+str(postura)+'_'+str(hemisferio)+".json", "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights(directory+"/model_"+str(postura)+'_'+str(hemisferio)+".h5")
+
 def save_signal(output, sujeto, postura, hemisferio):
 
     df = pd.DataFrame(output.tolist(), columns=['Output'])
-    df.to_csv(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_output.csv',index=False)
+    df.to_csv(PATH_RESULTADO_ESCALON%(sujeto, postura, hemisferio)+'_output.csv',index=False)
 
 def save_hidden_output(model, escalon, sujeto, postura, hemisferio):
     intermediate_layer_model = Model(inputs=model.layers[0].input,
                                  outputs=model.layers[0].output)
     intermediate_output = intermediate_layer_model.predict(escalon)
     df = pd.DataFrame({'Output': intermediate_output})
-    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_output_hidden_layer.xlsx')
+    writer = pd.ExcelWriter(PATH_RESULTADO_ESCALON%(sujeto, postura, hemisferio)+'_output_hidden_layer.xlsx')
     df.to_excel(writer, sheet_name='Kernel')
     writer.save()
 
@@ -326,7 +338,7 @@ def save_hidden_states(model, units, layer, sujeto, postura, hemisferio):
     df2 = pd.DataFrame(data_U_i, columns=column_U)
     df3 = pd.DataFrame(data_b_i, columns=column_b)
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(PATH_RESULTADO%(sujeto, postura, hemisferio)+'_layer_'+str(layer)+'.xlsx',index=False)
+    writer = pd.ExcelWriter(PATH_RESULTADO_ESCALON%(sujeto, postura, hemisferio)+'_layer_'+str(layer)+'.xlsx',index=False)
 
     # Write each dataframe to a different worksheet.
     df1.to_excel(writer, sheet_name='Kernel')
@@ -343,7 +355,7 @@ def run (sujeto, postura, proceso_escalon):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
     hemisferio = "Derecho"
-    PATH_RESULTADO_CONTEXTO = PATH_RESULTADO%(sujeto, postura, hemisferio)
+    PATH_RESULTADO_CONTEXTO = PATH_RESULTADO_ESCALON%(sujeto, postura, hemisferio)
 
     exists_1 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_1.csv")
     exists_2 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_2.csv")
@@ -386,7 +398,7 @@ def run (sujeto, postura, proceso_escalon):
     ################################################################################### Balance 1
     
     hemisferio = "Izquierdo"
-    PATH_RESULTADO_CONTEXTO = PATH_RESULTADO%(sujeto, postura, hemisferio)
+    PATH_RESULTADO_CONTEXTO = PATH_RESULTADO_ESCALON%(sujeto, postura, hemisferio)
 
     exists_1 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_1.csv")
     exists_2 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_2.csv")
@@ -426,11 +438,11 @@ set_random_seed(2)
 
 #run(sujeto='AC', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AC', postura='PIE', proceso_escalon = True)
-run(sujeto='AC', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='AC', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='AP', postura='PIE', proceso_escalon = False)
-#run(sujeto='AP', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='AP', postura='PIE', proceso_escalon = True)
+run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
 
 #run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='AV', postura='PIE', proceso_escalon = False)
