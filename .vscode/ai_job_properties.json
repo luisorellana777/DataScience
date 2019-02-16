@@ -1,0 +1,18 @@
+{
+    "version": "0.0.1",
+    "job": {
+        "type": "General",
+        "files": {
+            "includes": [
+                "**/*.py"
+            ]
+        },
+        "name": "Local-Thesis",
+        "startupCommand": "python",
+        "startupScript": "Python\\Regresion Logistica - Venta Online\\LogisticRegression.py",
+        "arguments": "",
+        "workingDirectory": ".",
+        "batchArguments": []
+    },
+    "platform": {}
+}

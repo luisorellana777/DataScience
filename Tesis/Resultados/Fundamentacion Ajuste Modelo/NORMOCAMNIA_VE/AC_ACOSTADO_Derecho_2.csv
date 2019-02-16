@@ -1,0 +1,5 @@
+﻿,epochs,dropout,activation,optimization,neurons,batch_size,hidden_layers,RESULT
+2,10,1.0,linear,Adam,6,199,3,0.32371354
+0,10,1.0,linear,Adam,6,1,3,-0.35267547
+3,10,1.0,linear,Adam,8,199,3,-0.33390138
+1,10,1.0,linear,Adam,8,1,3,-0.058973946

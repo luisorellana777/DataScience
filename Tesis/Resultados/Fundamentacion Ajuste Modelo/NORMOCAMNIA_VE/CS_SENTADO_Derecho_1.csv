@@ -1,0 +1,5 @@
+,epochs,dropout,activation,optimization,neurons,batch_size,hidden_layers,RESULT
+0,20,1.0,tanh,Adagrad,10,1,2,0.41579252
+1,20,1.0,tanh,Adagrad,20,1,2,0.3947121
+2,10,1.0,tanh,Adam,6,199,3,-0.6940689
+3,10,1.0,tanh,Adam,8,199,3,-0.6835283
