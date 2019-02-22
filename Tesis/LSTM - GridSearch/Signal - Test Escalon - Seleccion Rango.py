@@ -442,15 +442,15 @@ set_random_seed(2)
 
 #run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AP', postura='PIE', proceso_escalon = True)
-run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='AV', postura='PIE', proceso_escalon = False)
-#run(sujeto='AV', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='AV', postura='PIE', proceso_escalon = True)
+#run(sujeto='AV', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='CC', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='CC', postura='PIE', proceso_escalon = False)
-#run(sujeto='CC', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='CC', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='CC', postura='PIE', proceso_escalon = True)
+run(sujeto='CC', postura='SENTADO', proceso_escalon = True)
 
 #run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='CS', postura='PIE', proceso_escalon = False)
