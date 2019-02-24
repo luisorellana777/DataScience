@@ -454,10 +454,10 @@ set_random_seed(2)
 
 #run(sujeto='CS', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='CS', postura='PIE', proceso_escalon = True)
-run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='DM', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='DM', postura='PIE', proceso_escalon = False)
+#run(sujeto='DM', postura='ACOSTADO', proceso_escalon = True)
+run(sujeto='DM', postura='PIE', proceso_escalon = True)
 #run(sujeto='DM', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='DS', postura='ACOSTADO', proceso_escalon = False)
