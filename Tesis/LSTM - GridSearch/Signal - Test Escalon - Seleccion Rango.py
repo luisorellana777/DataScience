@@ -433,8 +433,8 @@ def run (sujeto, postura, proceso_escalon):
 
 
 #Repitable Experiment
-seed(1)
-set_random_seed(2)
+#seed(1)
+#set_random_seed(2)
 
 #run(sujeto='AC', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AC', postura='PIE', proceso_escalon = True)
@@ -457,10 +457,10 @@ set_random_seed(2)
 #run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
 
 #run(sujeto='DM', postura='ACOSTADO', proceso_escalon = True)
-run(sujeto='DM', postura='PIE', proceso_escalon = True)
-#run(sujeto='DM', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='DM', postura='PIE', proceso_escalon = True)
+#run(sujeto='DM', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='DS', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='DS', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='DS', postura='PIE', proceso_escalon = False)
 #run(sujeto='DS', postura='SENTADO', proceso_escalon = False)
 
