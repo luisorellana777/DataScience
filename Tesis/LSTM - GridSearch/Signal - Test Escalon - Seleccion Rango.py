@@ -27,9 +27,9 @@ from numpy.random import seed
 from tensorflow import set_random_seed
 import os
 
-PATH_SUJETOS = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/SUJETOS/%s/%s-%s-VE.csv")
-PATH_ESCALON = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Datos/ESCALON_PRESION/ESCALON.csv")
-PATH_RESULTADO = ("C:/Users/Luis.O.A/Documents/Trabajos Versionados/DataScience/Tesis/Resultados/Escalon/%s")
+PATH_SUJETOS = ("C:/Users/Luis/Documents/DataScience/Tesis/Datos/SUJETOS/%s/%s-%s-VE.csv")
+PATH_ESCALON = ("C:/Users/Luis/Documents/DataScience/Tesis/Datos/ESCALON_PRESION/ESCALON.csv")
+PATH_RESULTADO = ("C:/Users/Luis/Documents/DataScience/Tesis/Resultados/Escalon/%s")
 PATH_RESULTADO_ESCALON = (PATH_RESULTADO%("%s/%s_%s"))
 
 def create_dataset(nombre_sujeto, nombre_postura):
@@ -211,6 +211,27 @@ def plotting(escalon, output, batch_size, epochs, optimization, activation, hidd
     py.plot(fig, filename = "LSTM VFSC")
 
 
+def plotting_mathplot(escalon, output, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout, result_r):
+    
+    re_escalon = numpy.reshape(escalon, (escalon.shape[0]))
+    re_output = numpy.reshape(output, (output.shape[0]))
+    
+    fig, ax = plt.subplots()
+    
+    # Using set_dashes() to modify dashing of an existing line
+    line1, = ax.plot(list(range(1, len(re_escalon)+1)), re_escalon, label='Escalon')
+    
+    # Using plot(..., dashes=...) to set the dashing when creating a line
+    line2, = ax.plot(list(range(1, len(re_output)+1)), re_output, label='VFSC Respuesta Escalon')
+    
+    title="Batch=%d ; Epoch=%d ; Optimization=%s ; Activation=%s ; Layers=%d ; Units=%d ; Dropout=%.2f ; Correlation=%.3f"%(batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout, result_r)
+    ax.set_xlabel(title)
+    ax.set_title("LSTM - Respuesta a Escalon")
+    
+    ax.legend()
+    plt.show()
+    
+
 def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
 
     for row in range(df.shape[0]):#Cantidad de registros en el dataframe resultados
@@ -245,7 +266,7 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
 
                 output = evaluate_stair(lstm_model, escalon, batch_size)
 
-                plotting(escalon, output, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout, result_r)
+                plotting_mathplot(escalon, output, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout, result_r)
 
                 quedar = input("¿Te quedas con esta? \nSi(1) \nNo(0) \n")
             
@@ -354,6 +375,10 @@ def run (sujeto, postura, proceso_escalon):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
+    path = PATH_RESULTADO%(sujeto)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     hemisferio = "Derecho"
     PATH_RESULTADO_CONTEXTO = PATH_RESULTADO_ESCALON%(sujeto, postura, hemisferio)
 
@@ -433,79 +458,84 @@ def run (sujeto, postura, proceso_escalon):
 
 
 #Repitable Experiment
-#seed(1)
-#set_random_seed(2)
+seed(1)
+set_random_seed(2)
 
 #run(sujeto='AC', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AC', postura='PIE', proceso_escalon = True)
-#run(sujeto='AC', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='AC', postura='SENTADO', proceso_escalon = True) # ---> Izquierdo
 
-#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True) # ---> Izquierdo
 #run(sujeto='AP', postura='PIE', proceso_escalon = True)
 #run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = True) # ---> Izquierdo
 #run(sujeto='AV', postura='PIE', proceso_escalon = True)
-#run(sujeto='AV', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='AV', postura='SENTADO', proceso_escalon = True) # ---> Derecho
 
+             # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='CC', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='CC', postura='PIE', proceso_escalon = True)
 #run(sujeto='CC', postura='SENTADO', proceso_escalon = True)
 
+             # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='CS', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='CS', postura='PIE', proceso_escalon = True)
 #run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
 
 #run(sujeto='DM', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='DM', postura='PIE', proceso_escalon = True)
-#run(sujeto='DM', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='DM', postura='PIE', proceso_escalon = True) # ---> Derecho
+#run(sujeto='DM', postura='SENTADO', proceso_escalon = True) # ---> Izquierdo
 
-run(sujeto='DS', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='DS', postura='PIE', proceso_escalon = False)
-#run(sujeto='DS', postura='SENTADO', proceso_escalon = False)
+             # ---> PROCESAR NUEVAMENTE <--- #
+#run(sujeto='DS', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='DS', postura='PIE', proceso_escalon = True)
+#run(sujeto='DS', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='GP', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='GP', postura='PIE', proceso_escalon = False)
-#run(sujeto='GP', postura='SENTADO', proceso_escalon = False)
+             # ---> PROCESAR NUEVAMENTE <--- #
+#run(sujeto='GP', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='GP', postura='PIE', proceso_escalon = True)
+#run(sujeto='GP', postura='SENTADO', proceso_escalon = True)
+             
+             # ---> PROCESAR NUEVAMENTE <--- #
+#run(sujeto='HF', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='HF', postura='PIE', proceso_escalon = True)
+#run(sujeto='HF', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='HF', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='HF', postura='PIE', proceso_escalon = False)
-#run(sujeto='HF', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='HS', postura='ACOSTADO', proceso_escalon = True)# ----> PENDIENTE
+#run(sujeto='HS', postura='PIE', proceso_escalon = True)
+#run(sujeto='HS', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='HS', postura='ACOSTADO', proceso_escalon = False)
-"""
-run(sujeto='HS', postura='PIE', proceso_escalon = False)
-run(sujeto='HS', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='IH', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='IH', postura='PIE', proceso_escalon = True)
+#run(sujeto='IH', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='IH', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='IH', postura='PIE', proceso_escalon = False)
-run(sujeto='IH', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='MM', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='MM', postura='PIE', proceso_escalon = True)
+#run(sujeto='MM', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='MM', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='MM', postura='PIE', proceso_escalon = False)
-run(sujeto='MM', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='MR', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='MR', postura='PIE', proceso_escalon = True)
+#run(sujeto='MR', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='MR', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='MR', postura='PIE', proceso_escalon = False)
-run(sujeto='MR', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='MV', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='MV', postura='PIE', proceso_escalon = False)
+#run(sujeto='MV', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='MV', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='MV', postura='PIE', proceso_escalon = False)
-run(sujeto='MV', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='ND', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='ND', postura='PIE', proceso_escalon = False)
+#run(sujeto='ND', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='ND', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='ND', postura='PIE', proceso_escalon = False)
-run(sujeto='ND', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='PC', postura='PIE', proceso_escalon = False)
+#run(sujeto='PC', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='PC', postura='PIE', proceso_escalon = False)
-run(sujeto='PC', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='RO', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='RO', postura='PIE', proceso_escalon = False)
+#run(sujeto='RO', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='RO', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='RO', postura='PIE', proceso_escalon = False)
-run(sujeto='RO', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='VT', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='VT', postura='PIE', proceso_escalon = False)
+#run(sujeto='VT', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='VT', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='VT', postura='PIE', proceso_escalon = False)
-run(sujeto='VT', postura='SENTADO', proceso_escalon = False)
-"""
+
