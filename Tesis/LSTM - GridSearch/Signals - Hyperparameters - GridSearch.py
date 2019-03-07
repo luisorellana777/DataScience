@@ -252,7 +252,7 @@ def run_rango (sujeto, postura, balance):
         del train_VFSCd_temp
     
     ################################################################################### epochs
-    epochs = [10, 20, 30, 40, 50]
+    epochs = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     epochs_result = [int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="epochs", epochs=epochs))]
 
     ################################################################################### dropout
@@ -260,13 +260,13 @@ def run_rango (sujeto, postura, balance):
     #dropout_result = [float(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="dropout", epochs=epochs_result, dropout=dropout))]
     dropout_result = [1.0]
     ################################################################################### activation
-    activation = ['softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
-    activation_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="activation", epochs=epochs_result, dropout=dropout_result, activation=activation))]
+    #activation = ['softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+    #activation_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="activation", epochs=epochs_result, dropout=dropout_result, activation=activation))]
     activation_result = ['tanh']#Es el unico que puede modelar respuesta a escalones
     ################################################################################### optimization
-    optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
-    optimization_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", epochs=epochs_result, dropout=dropout_result, activation=activation_result, optimization=optimization))]
-    
+    #optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+    #optimization_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", epochs=epochs_result, dropout=dropout_result, activation=activation_result, optimization=optimization))]
+    optimization_result = ['Adagrad']
     ################################################################################### neurons
     neurons = [10,20,30,40,50,60,70,80,90,100]
     neurons_result = [int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="neurons", epochs=epochs_result, dropout=dropout_result, optimization=optimization_result, activation=activation_result, neurons=neurons))]

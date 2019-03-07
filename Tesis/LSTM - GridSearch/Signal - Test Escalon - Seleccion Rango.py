@@ -251,7 +251,7 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
 
         for dropout in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
 
-            for execution in range(1,10):
+            for execution in range(1,100):
 
                 opcion = input("Ejecucion %d. \nHemisferio %s. \n¿Deseas continuar? (0) \n¿Deseas Cambiar DropOut? (1) \n¿Deseas Probar Con Otros Hiperparametros (2)?\n%s"%(execution,hemisferio,pregunta_seguir))
             
@@ -463,17 +463,16 @@ set_random_seed(2)
 
 #run(sujeto='AC', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AC', postura='PIE', proceso_escalon = True)
-#run(sujeto='AC', postura='SENTADO', proceso_escalon = True) # ---> Izquierdo
+#run(sujeto='AC', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True) # ---> Izquierdo
+#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AP', postura='PIE', proceso_escalon = True)
 #run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = True) # ---> Izquierdo
+#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='AV', postura='PIE', proceso_escalon = True)
-#run(sujeto='AV', postura='SENTADO', proceso_escalon = True) # ---> Derecho
+#run(sujeto='AV', postura='SENTADO', proceso_escalon = True)
 
-             # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='CC', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='CC', postura='PIE', proceso_escalon = True)
 #run(sujeto='CC', postura='SENTADO', proceso_escalon = True)
@@ -518,13 +517,13 @@ set_random_seed(2)
 #run(sujeto='MR', postura='PIE', proceso_escalon = True)
 #run(sujeto='MR', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='MV', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='MV', postura='PIE', proceso_escalon = False)
-#run(sujeto='MV', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='MV', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='MV', postura='PIE', proceso_escalon = True)
+#run(sujeto='MV', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='ND', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='ND', postura='PIE', proceso_escalon = False)
-#run(sujeto='ND', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='ND', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='ND', postura='PIE', proceso_escalon = True)
+#run(sujeto='ND', postura='SENTADO', proceso_escalon = True)
 
 #run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='PC', postura='PIE', proceso_escalon = False)
