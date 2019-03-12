@@ -1,0 +1,17 @@
+epochs,dropout,activation,optimization,neurons,batch_size,hidden_layers,RESULT
+80,1.0,tanh,RMSprop,10,1,2,0.60774744
+70,1.0,tanh,RMSprop,10,1,2,0.52419066
+75,1.0,tanh,RMSprop,10,1,2,0.5048173
+90,1.0,tanh,RMSprop,10,1,2,0.4919338
+95,1.0,tanh,RMSprop,10,1,2,0.49154317
+100,1.0,tanh,RMSprop,10,1,2,0.43643296
+55,1.0,tanh,RMSprop,10,1,2,0.42429674
+35,1.0,tanh,RMSprop,10,1,2,0.38120353
+25,1.0,tanh,RMSprop,10,1,2,0.3259954
+85,1.0,tanh,RMSprop,10,1,2,0.29267633
+60,1.0,tanh,RMSprop,10,1,2,0.28865317
+40,1.0,tanh,RMSprop,10,1,2,0.2778674
+45,1.0,tanh,RMSprop,10,1,2,0.2674424
+30,1.0,tanh,RMSprop,10,1,2,0.1776946
+65,1.0,tanh,RMSprop,10,1,2,0.17747071
+50,1.0,tanh,RMSprop,10,1,2,0.029590365

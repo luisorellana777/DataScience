@@ -1,4 +1,8 @@
-from __future__ import print_function
+import os
+#FORZAR USO DE CPU
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
 import pandas as pd
 import numpy
 import matplotlib.pyplot as plt
@@ -23,8 +27,11 @@ from functools import reduce
 from scipy import stats
 
 
+CPU_USAGE = 1
+GPU_USAGE = 0
+
 def create_dataset(nombre_sujeto, nombre_postura):
-    PATH = ("C:/Users/Luis.O.A/Documents/USACH/Tesis/Dataset/Sujetos/Muestreo 0.4/%s/%s-%s-VE.csv"%(nombre_sujeto, nombre_sujeto, nombre_postura))
+    PATH = ("C:/Users/Luis/Documents/DataScience/Tesis/Datos/SUJETOS/%s/%s-%s-VE.csv"%(nombre_sujeto, nombre_sujeto, nombre_postura))
     X = pd.read_csv(PATH, sep="	")
     
     # normalize the dataset
@@ -130,6 +137,7 @@ def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimi
     del_level_hyp = False
     while i <= repeats:
         # fit the model
+        #use_cpu_gpu()
         lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
         # report performance
         r = evaluate(lstm_model, testX, testY, batch_size)[0]
@@ -169,7 +177,18 @@ def inverse_fisher_transform(z):
     r = (exp(2*z)-1)/(exp(2*z)+1)
     return r
 
-def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX, testY, hyperparameter, batch_size=[1], epochs=[10], optimization=["Adam"], activation=["tanh"], hidden_layers=[3], neurons=[10], dropout=[1.0]):
+def use_cpu_gpu():
+    config = tf.ConfigProto(intra_op_parallelism_threads=10,
+                            inter_op_parallelism_threads=10, 
+                            allow_soft_placement=True,
+                            device_count = {'CPU' : CPU_USAGE,
+                                            'GPU' : GPU_USAGE}
+                           )
+    #config.gpu_options.allow_growth = True
+    session = tf.Session(config=config)
+    K.set_session(session)
+
+def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX, testY, hyperparameter, batch_size=[1], epochs=[70], optimization=["RMSprop"], activation=["tanh"], hidden_layers=[3], neurons=[10], dropout=[1.0]):
     print("################################################################################### " + hyperparameter)
     
     columnas = ['epochs','dropout','activation','optimization','neurons','batch_size','hidden_layers','CORRELATION','FISHER']
@@ -187,6 +206,7 @@ def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX,
                     for h in hidden_layers:
                         for n in neurons:
                             for d in dropout:
+
                                 mean_corr, mean_z = experiment(trainX, trainY, testX, testY, repeats, b, e, o, a, h, n, d)
                                 results[row][0] = e
                                 results[row][1] = d
@@ -208,7 +228,7 @@ def run_experiment(experimento, sujeto, postura, balance, trainX, trainY, testX,
     df = df.sort_values(by='CORRELATION', ascending=False)
     print(df)
     nombre_archivo = sujeto+'_'+postura+'/Sujeto_Posicion_'+hyperparameter+'_'+str(balance)+'.xlsx'
-    writer = pd.ExcelWriter('C:/Users/Luis.O.A/Documents/USACH/Tesis/Resultados_'+experimento+'/'+nombre_archivo)
+    writer = pd.ExcelWriter('C:/Users/Luis/Documents/DataScience/Tesis/Resultados/Fundamentacion Ajuste Modelo/Resultados_'+experimento+'/'+nombre_archivo)
     df.to_excel(writer,'Resultados')
     writer.save()
     print('################################################################################### Archivo |||'+nombre_archivo+'||| Creado')
@@ -240,6 +260,7 @@ def run_rango (sujeto, postura, balance):
     #numpy.random.seed(seed)
     # load dataset
     # split into input (X) and output (Y) variables
+    
     train_PAM, train_VFSCd, test_PAM, test_VFSCd = create_dataset(sujeto, postura)
     if balance == 2:
         train_PAM_temp = train_PAM
@@ -264,24 +285,26 @@ def run_rango (sujeto, postura, balance):
     #activation_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="activation", epochs=epochs_result, dropout=dropout_result, activation=activation))]
     activation_result = ['tanh']#Es el unico que puede modelar respuesta a escalones
     ################################################################################### optimization
-    #optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
-    #optimization_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", epochs=epochs_result, dropout=dropout_result, activation=activation_result, optimization=optimization))]
-    optimization_result = ['Adagrad']
+    optimization = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+    optimization_result = [str(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="optimization", epochs=epochs_result, dropout=dropout_result, activation=activation_result, optimization=optimization))]
+    #optimization_result = ['Adagrad']
     ################################################################################### neurons
     neurons = [10,20,30,40,50,60,70,80,90,100]
     neurons_result = [int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="neurons", epochs=epochs_result, dropout=dropout_result, optimization=optimization_result, activation=activation_result, neurons=neurons))]
-
+    
     ################################################################################### batch_size
+    '''
     batch_size = []
     for i in range(1,train_PAM.shape[0]+1):
         if (train_PAM.shape[0]%i)==0:
             batch_size.append(i)
 
     batch_size_result = [int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="batch_size", epochs=epochs_result, dropout=dropout_result, optimization=optimization_result, activation=activation_result, neurons=neurons_result, batch_size=batch_size))]
-
+    '''
     ################################################################################### hidden_layers
-    hidden_layers = [2, 3, 4, 5]
-    hidden_layers_result = [int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="hidden_layers", epochs=epochs_result, dropout=dropout_result, optimization=optimization_result, activation=activation_result, neurons=neurons_result, batch_size=batch_size_result, hidden_layers=hidden_layers))]
+    #hidden_layers = [2, 3, 4, 5]
+    hidden_layers = [2]
+    int(run_experiment('Rango', sujeto, postura, balance, train_PAM, train_VFSCd, test_PAM, test_VFSCd, hyperparameter="hidden_layers", epochs=epochs_result, dropout=dropout_result, optimization=optimization_result, activation=activation_result, neurons=neurons_result, hidden_layers=hidden_layers))
 
 def run_hiperparametro (sujeto, postura, balance):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -337,22 +360,13 @@ def run_hiperparametro (sujeto, postura, balance):
 
 
 ############################################### POSTURA: ACOSTADO
-#run_rango(sujeto='AV', postura='ACOSTADO', balance=1) 
-run_rango(sujeto='AV', postura='ACOSTADO', balance=2)
-
-run_rango(sujeto='AC', postura='ACOSTADO', balance=1)
-run_rango(sujeto='AC', postura='ACOSTADO', balance=2)
+run_rango(sujeto='VT', postura='ACOSTADO', balance=1) 
+run_rango(sujeto='VT', postura='ACOSTADO', balance=2)
 
 ############################################### POSTURA: PIE
-run_rango(sujeto='CC', postura='PIE', balance=1)
-run_rango(sujeto='CC', postura='PIE', balance=2)
-
-run_rango(sujeto='DM', postura='PIE', balance=1)
-run_rango(sujeto='DM', postura='PIE', balance=2)
+run_rango(sujeto='VT', postura='PIE', balance=1) 
+run_rango(sujeto='VT', postura='PIE', balance=2)
 
 ############################################### POSTURA: SENTADO
-run_rango(sujeto='PC', postura='SENTADO', balance=1)
-run_rango(sujeto='PC', postura='SENTADO', balance=2)
-
-run_rango(sujeto='CS', postura='SENTADO', balance=1)  
-run_rango(sujeto='CS', postura='SENTADO', balance=2) 
+run_rango(sujeto='VT', postura='SENTADO', balance=1) 
+run_rango(sujeto='VT', postura='SENTADO', balance=2)
