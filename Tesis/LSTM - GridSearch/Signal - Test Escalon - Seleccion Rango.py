@@ -488,13 +488,13 @@ set_random_seed(2)
 #run(sujeto='CC', postura='SENTADO', proceso_escalon = True)
 
              # ---> PROCESAR NUEVAMENTE <--- #
-#run(sujeto='CS', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='CS', postura='PIE', proceso_escalon = True)
-#run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
+#run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='CS', postura='PIE', proceso_escalon = False)
+#run(sujeto='CS', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='DM', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='DM', postura='PIE', proceso_escalon = True) # ---> Derecho
-#run(sujeto='DM', postura='SENTADO', proceso_escalon = True) # ---> Izquierdo
+#run(sujeto='DM', postura='PIE', proceso_escalon = True)
+#run(sujeto='DM', postura='SENTADO', proceso_escalon = True)
 
              # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='DS', postura='ACOSTADO', proceso_escalon = True)
@@ -543,8 +543,8 @@ set_random_seed(2)
 #run(sujeto='RO', postura='PIE', proceso_escalon = True)
 #run(sujeto='RO', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='VT', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='VT', postura='PIE', proceso_escalon = False)
-run(sujeto='VT', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='VT', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='VT', postura='PIE', proceso_escalon = True)
+#run(sujeto='VT', postura='SENTADO', proceso_escalon = True)
 
 
