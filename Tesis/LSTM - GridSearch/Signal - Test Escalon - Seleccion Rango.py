@@ -495,14 +495,12 @@ set_random_seed(2)
 #run(sujeto='DM', postura='PIE', proceso_escalon = True)
 #run(sujeto='DM', postura='SENTADO', proceso_escalon = True)
 
-             # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='DS', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='DS', postura='PIE', proceso_escalon = True)
 #run(sujeto='DS', postura='SENTADO', proceso_escalon = True)
 
-             # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='GP', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='GP', postura='PIE', proceso_escalon = True)
+run(sujeto='GP', postura='PIE', proceso_escalon = True)#vsriabilidad de izquierdo
 #run(sujeto='GP', postura='SENTADO', proceso_escalon = True)
              
 #run(sujeto='HF', postura='ACOSTADO', proceso_escalon = True)
