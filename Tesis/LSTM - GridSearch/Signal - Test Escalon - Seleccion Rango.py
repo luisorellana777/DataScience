@@ -487,10 +487,9 @@ set_random_seed(2)
 #run(sujeto='CC', postura='PIE', proceso_escalon = True)
 #run(sujeto='CC', postura='SENTADO', proceso_escalon = True)
 
-             # ---> PROCESAR NUEVAMENTE <--- #
-#run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False)
-#run(sujeto='CS', postura='PIE', proceso_escalon = False)
-#run(sujeto='CS', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='CS', postura='ACOSTADO', proceso_escalon = True)
+#run(sujeto='CS', postura='PIE', proceso_escalon = True)
+#run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
 
 #run(sujeto='DM', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='DM', postura='PIE', proceso_escalon = True)
@@ -506,7 +505,6 @@ set_random_seed(2)
 #run(sujeto='GP', postura='PIE', proceso_escalon = True)
 #run(sujeto='GP', postura='SENTADO', proceso_escalon = True)
              
-             # ---> PROCESAR NUEVAMENTE <--- #
 #run(sujeto='HF', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='HF', postura='PIE', proceso_escalon = True)
 #run(sujeto='HF', postura='SENTADO', proceso_escalon = True)
