@@ -420,7 +420,7 @@ run <- function(
   tgt.suffix = paste("stats", VERSION, sep = "-"),
   tgt.dir = file.path(WORK.DIR, "stats"),
   tgt.ext = "csv",
-  overwrite = FALSE,
+  overwrite = TRUE,
   subjects = c("AC","AP","AV","CC","CS","DM","DS","GP","HF","HS","IH","MM","MR","MV","ND","PC","RO", "VT"),
   manoeuvres = c("ACOSTADO", "PIE", "SENTADO"),
   time.col.name = "Time",
@@ -430,12 +430,12 @@ run <- function(
   left.plot.suffix = "Izq",
   right.plot.suffix = "Der",
   sampling.time = 0.4,
-  time.release = 0,
-  baseline.initial.time = -40,
+  time.release = 0,#5 segundos antes de la caida
+  baseline.initial.time = -10.0,#5 segundos antes de la caida
   baseline.final.time = time.release,
-  min.ABP.max.delta.time = 5 * 0.8,
-  min.CBFV.max.delta.time = 8 * 0.8,
-  stabilisation.time = 30,
+  min.ABP.max.delta.time = 20 * 0.8,#a partir de time.release busca el minimo
+  min.CBFV.max.delta.time = 20 * 0.8,#a partir de time.release busca el minimo
+  stabilisation.time = 20,#cuanto dura la señal para que se recupere nuevamente
   referential.time.instant = time.release,
   delta.time.before.ref = 0,
   delta.time.after.ref = round(floor(20 * 0.8 / sampling.time) * sampling.time, 1),

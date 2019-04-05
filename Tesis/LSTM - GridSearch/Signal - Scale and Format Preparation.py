@@ -11,6 +11,7 @@ PATH_ESCALON = ("C:/Users/Luis/Documents/DataScience/Tesis/Datos/ESCALON_PRESION
 PATH_RESULTADO = ("C:/Users/Luis/Documents/DataScience/Tesis/Resultados/Escalon/%s")
 PATH_RESULTADO_MFARI = ("C:/Users/Luis/Documents/DataScience/Tesis/Calculo ARI/v15.9.10/Data/%s")
 PATH_RESULTADO_FORMATEADO = ("C:/Users/Luis/Documents/DataScience/Tesis/Calculo ARI/v15.9.10/Data/%s/%s-%s.txt")
+PATH_RESULTADO_IMAGE = ("C:/Users/Luis/Documents/DataScience/Tesis/Calculo ARI/v15.9.10/Data/%s/%s-%s-%s.png")
 
 PATH_RESULTADO_ESCALON = (PATH_RESULTADO%("%s/%s_%s"))
 
@@ -41,25 +42,30 @@ def read_output(nombre_sujeto, nombre_postura, hemisferio, scaler_VFSCd, scaler_
         out = scaler_VFSCd.transform(X.Output.values.reshape((len(X.Output.values), 1)))
         return out
 
-def plotting_mathplot(escalon, output):
+def plotting_mathplot(hemisferio, sujeto, postura, escalon, output):
     
+    time = np.round(np.arange(-78.0, 81.2, 0.4),1)
+
     re_escalon = numpy.reshape(escalon, (escalon.shape[0]))
     re_output = numpy.reshape(output, (output.shape[0]))
     
     fig, ax = plt.subplots()
     
     # Using set_dashes() to modify dashing of an existing line
-    line1, = ax.plot(list(range(1, len(re_escalon)+1)), re_escalon, label='Escalon')
+    line1, = ax.plot(time, re_escalon, label='Escalon')
     
     # Using plot(..., dashes=...) to set the dashing when creating a line
-    line2, = ax.plot(list(range(1, len(re_output)+1)), re_output, label='VFSC Respuesta Escalon')
+    line2, = ax.plot(time, re_output, label='VFSC Respuesta Escalon')
     
     title=""
     ax.set_xlabel(title)
     ax.set_title("LSTM - Respuesta a Escalon")
-    
+    ax.margins(x=-0.35, y=0)
     ax.legend()
-    plt.show()
+    #plt.show()
+    plt.tight_layout()
+    plt.savefig(PATH_RESULTADO_IMAGE%(sujeto, sujeto, postura, hemisferio), 
+               quality  = 95, pad_inches =0, bbox_inches= 'tight')
 
 def save_signal(sujeto, postura, escalon, output_izquierdo, output_derecho):
 
@@ -81,11 +87,11 @@ def run(sujeto, postura):
     output_izquierdo = read_output(sujeto, postura, "Izquierdo", scaler_VFSCd, scaler_VFSCi)
     output_derecho = read_output(sujeto, postura, "Derecho", scaler_VFSCd, scaler_VFSCi)
 
-    save_signal(sujeto, postura, escalon, output_izquierdo, output_derecho)
+    #save_signal(sujeto, postura, escalon, output_izquierdo, output_derecho)
 
-    #plotting_mathplot(escalon, output_izquierdo)
-    #plotting_mathplot(escalon, output_derecho)
-
+    plotting_mathplot("izquiero", sujeto, postura, escalon, output_izquierdo)
+    plotting_mathplot("derecho", sujeto, postura, escalon, output_derecho)
+"""
 run("AC", "ACOSTADO")
 run("AC", "PIE")
 run("AC", "SENTADO")
@@ -129,7 +135,7 @@ run(sujeto='HS', postura='SENTADO')
 run(sujeto='IH', postura='ACOSTADO')
 run(sujeto='IH', postura='PIE')
 run(sujeto='IH', postura='SENTADO')
-
+"""
 run(sujeto='MM', postura='ACOSTADO')
 run(sujeto='MM', postura='PIE')
 run(sujeto='MM', postura='SENTADO')
