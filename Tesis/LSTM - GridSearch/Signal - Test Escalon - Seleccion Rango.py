@@ -123,7 +123,7 @@ def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[65], op
     filas = len(batch_size) * len(epochs) * len(optimization) * len(activation) * len(hidden_layers) * len(neurons) * len(dropout)
     results = numpy.chararray((filas,8), itemsize=20, unicode=True)
     row = 0
-    repeats = 1
+    repeats = 10
     
     for b in batch_size:
         for e in epochs:
@@ -397,10 +397,14 @@ def run (sujeto, postura, proceso_escalon):
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
     
-    epochs = [25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
-    #PARA EL RESTO DE LOS SUJETOS
-    #    epochs = [20,22,24,26,28,30]
-    #    neurons = [6,8,10,12,14,16]
+    epochs = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+    neurons = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+
+    batch_size = []
+    for i in range(1,train_PAM.shape[0]+1):
+        if (train_PAM.shape[0]%i)==0:
+            batch_size.append(199)
+    
 
     best_balance = 0
     
@@ -408,12 +412,12 @@ def run (sujeto, postura, proceso_escalon):
         ################################################################################### Balance 1
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Derecho')
 
-        df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, epochs=epochs)
+        df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, epochs=epochs, neurons=neurons)
 
         ################################################################################### Balance 2
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Derecho')
 
-        df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, epochs=epochs)
+        df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, epochs=epochs, neurons=neurons)
 
         df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
 
@@ -441,12 +445,12 @@ def run (sujeto, postura, proceso_escalon):
     print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
     if exists_1 == False and exists_2 == False:
-        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, epochs=epochs)
+        df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, epochs=epochs, neurons=neurons)
 
         ################################################################################### Balance 2
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Izquierdo')
 
-        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, epochs=epochs)
+        df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, epochs=epochs, neurons=neurons)
 
         df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
 
@@ -475,35 +479,35 @@ set_random_seed(2)
 #run(sujeto='AC', postura='PIE', proceso_escalon = True)
 #run(sujeto='AC', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='AP', postura='PIE', proceso_escalon = True)
+#run(sujeto='AP', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='AP', postura='PIE', proceso_escalon = False)
 #run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='AV', postura='PIE', proceso_escalon = True)
-#run(sujeto='AV', postura='SENTADO', proceso_escalon = True)
+run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='AV', postura='PIE', proceso_escalon = False)
+run(sujeto='AV', postura='SENTADO', proceso_escalon = False)
 
-#run(sujeto='CC', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='CC', postura='PIE', proceso_escalon = True)
-#run(sujeto='CC', postura='SENTADO', proceso_escalon = True)
+run(sujeto='CC', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='CC', postura='PIE', proceso_escalon = False)
+run(sujeto='CC', postura='SENTADO', proceso_escalon = False)
 
-#run(sujeto='CS', postura='ACOSTADO', proceso_escalon = True)
+run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='CS', postura='PIE', proceso_escalon = True)
-#run(sujeto='CS', postura='SENTADO', proceso_escalon = True)
+run(sujeto='CS', postura='SENTADO', proceso_escalon = False)
 
-#run(sujeto='DM', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='DM', postura='PIE', proceso_escalon = True)
-#run(sujeto='DM', postura='SENTADO', proceso_escalon = True)
+run(sujeto='DM', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='DM', postura='PIE', proceso_escalon = False)
+run(sujeto='DM', postura='SENTADO', proceso_escalon = False)
 
-#run(sujeto='DS', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='DS', postura='PIE', proceso_escalon = True)
-#run(sujeto='DS', postura='SENTADO', proceso_escalon = True)
+run(sujeto='DS', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='DS', postura='PIE', proceso_escalon = False)
+run(sujeto='DS', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='GP', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='GP', postura='PIE', proceso_escalon = True)
 #run(sujeto='GP', postura='SENTADO', proceso_escalon = True)
              
-#run(sujeto='HF', postura='ACOSTADO', proceso_escalon = True)
+run(sujeto='HF', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='HF', postura='PIE', proceso_escalon = True)
 #run(sujeto='HF', postura='SENTADO', proceso_escalon = True)
 
@@ -515,29 +519,29 @@ set_random_seed(2)
 #run(sujeto='IH', postura='PIE', proceso_escalon = True)
 #run(sujeto='IH', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='MM', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='MM', postura='PIE', proceso_escalon = True)
-#run(sujeto='MM', postura='SENTADO', proceso_escalon = True)
+run(sujeto='MM', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='MM', postura='PIE', proceso_escalon = False)
+run(sujeto='MM', postura='SENTADO', proceso_escalon = False)
 
-#run(sujeto='MR', postura='ACOSTADO', proceso_escalon = True)
+run(sujeto='MR', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='MR', postura='PIE', proceso_escalon = True)
-#run(sujeto='MR', postura='SENTADO', proceso_escalon = True)
+run(sujeto='MR', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='MV', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='MV', postura='PIE', proceso_escalon = True)
+run(sujeto='MV', postura='PIE', proceso_escalon = False)
 #run(sujeto='MV', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='ND', postura='ACOSTADO', proceso_escalon = True)
+run(sujeto='ND', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='ND', postura='PIE', proceso_escalon = True)
 #run(sujeto='ND', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='PC', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='PC', postura='PIE', proceso_escalon = True)
-#run(sujeto='PC', postura='SENTADO', proceso_escalon = True)
+run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='PC', postura='PIE', proceso_escalon = False)
+run(sujeto='PC', postura='SENTADO', proceso_escalon = False)
 
-#run(sujeto='RO', postura='ACOSTADO', proceso_escalon = True)
-#run(sujeto='RO', postura='PIE', proceso_escalon = True)
-#run(sujeto='RO', postura='SENTADO', proceso_escalon = True)
+run(sujeto='RO', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='RO', postura='PIE', proceso_escalon = False)
+run(sujeto='RO', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='VT', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='VT', postura='PIE', proceso_escalon = True)
