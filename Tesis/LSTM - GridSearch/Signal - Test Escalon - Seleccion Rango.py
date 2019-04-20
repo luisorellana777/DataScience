@@ -483,35 +483,35 @@ set_random_seed(2)
 #run(sujeto='AP', postura='PIE', proceso_escalon = False)
 #run(sujeto='AP', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='AV', postura='PIE', proceso_escalon = False)
-run(sujeto='AV', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='AV', postura='PIE', proceso_escalon = False)
+#run(sujeto='AV', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='CC', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='CC', postura='PIE', proceso_escalon = False)
-run(sujeto='CC', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='CC', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='CC', postura='PIE', proceso_escalon = False)
+#run(sujeto='CC', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='CS', postura='PIE', proceso_escalon = True)
-run(sujeto='CS', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='CS', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='DM', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='DM', postura='PIE', proceso_escalon = False)
-run(sujeto='DM', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='DM', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='DM', postura='PIE', proceso_escalon = False)
+#run(sujeto='DM', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='DS', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='DS', postura='PIE', proceso_escalon = False)
-run(sujeto='DS', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='DS', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='DS', postura='PIE', proceso_escalon = False)
+#run(sujeto='DS', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='GP', postura='ACOSTADO', proceso_escalon = True)
 #run(sujeto='GP', postura='PIE', proceso_escalon = True)
 #run(sujeto='GP', postura='SENTADO', proceso_escalon = True)
              
-run(sujeto='HF', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='HF', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='HF', postura='PIE', proceso_escalon = True)
 #run(sujeto='HF', postura='SENTADO', proceso_escalon = True)
 
-#run(sujeto='HS', postura='ACOSTADO', proceso_escalon = True)# ----> PENDIENTE
+run(sujeto='HS', postura='ACOSTADO', proceso_escalon = False)# ----> PENDIENTE
 #run(sujeto='HS', postura='PIE', proceso_escalon = True)
 #run(sujeto='HS', postura='SENTADO', proceso_escalon = True)
 
@@ -519,28 +519,28 @@ run(sujeto='HF', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='IH', postura='PIE', proceso_escalon = True)
 #run(sujeto='IH', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='MM', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='MM', postura='PIE', proceso_escalon = False)
-run(sujeto='MM', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='MM', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='MM', postura='PIE', proceso_escalon = False)
+#run(sujeto='MM', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='MR', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='MR', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='MR', postura='PIE', proceso_escalon = True)
-run(sujeto='MR', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='MR', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='MV', postura='ACOSTADO', proceso_escalon = True)
-run(sujeto='MV', postura='PIE', proceso_escalon = False)
+#run(sujeto='MV', postura='PIE', proceso_escalon = False)
 #run(sujeto='MV', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='ND', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='ND', postura='ACOSTADO', proceso_escalon = False)
 #run(sujeto='ND', postura='PIE', proceso_escalon = True)
 #run(sujeto='ND', postura='SENTADO', proceso_escalon = True)
 
-run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='PC', postura='PIE', proceso_escalon = False)
-run(sujeto='PC', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='PC', postura='PIE', proceso_escalon = False)
+#run(sujeto='PC', postura='SENTADO', proceso_escalon = False)
 
-run(sujeto='RO', postura='ACOSTADO', proceso_escalon = False)
-run(sujeto='RO', postura='PIE', proceso_escalon = False)
+#run(sujeto='RO', postura='ACOSTADO', proceso_escalon = False)
+#run(sujeto='RO', postura='PIE', proceso_escalon = False)
 run(sujeto='RO', postura='SENTADO', proceso_escalon = False)
 
 #run(sujeto='VT', postura='ACOSTADO', proceso_escalon = True)
