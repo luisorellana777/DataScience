@@ -19,7 +19,7 @@ hist(left)
 hist(right)
 
 #normal
-t.test(left, right, alternative = "two.sided") #Los hemisferios son similares
+t.test(left, right, alternative = "two.sided") #Los hemisferios son similares por quep-value > 0.05
 
 ##############################################
 #mean mfARI

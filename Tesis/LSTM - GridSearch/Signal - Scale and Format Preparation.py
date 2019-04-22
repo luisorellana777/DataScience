@@ -87,11 +87,11 @@ def run(sujeto, postura):
     output_izquierdo = read_output(sujeto, postura, "Izquierdo", scaler_VFSCd, scaler_VFSCi)
     output_derecho = read_output(sujeto, postura, "Derecho", scaler_VFSCd, scaler_VFSCi)
 
-    #save_signal(sujeto, postura, escalon, output_izquierdo, output_derecho)
+    save_signal(sujeto, postura, escalon, output_izquierdo, output_derecho)
 
     plotting_mathplot("izquiero", sujeto, postura, escalon, output_izquierdo)
     plotting_mathplot("derecho", sujeto, postura, escalon, output_derecho)
-"""
+
 run("AC", "ACOSTADO")
 run("AC", "PIE")
 run("AC", "SENTADO")
@@ -128,14 +128,14 @@ run(sujeto='HF', postura='ACOSTADO')
 run(sujeto='HF', postura='PIE')
 run(sujeto='HF', postura='SENTADO')
 
-#run(sujeto='HS', postura='ACOSTADO')
+run(sujeto='HS', postura='ACOSTADO')
 run(sujeto='HS', postura='PIE')
 run(sujeto='HS', postura='SENTADO')
 
 run(sujeto='IH', postura='ACOSTADO')
 run(sujeto='IH', postura='PIE')
 run(sujeto='IH', postura='SENTADO')
-"""
+
 run(sujeto='MM', postura='ACOSTADO')
 run(sujeto='MM', postura='PIE')
 run(sujeto='MM', postura='SENTADO')
