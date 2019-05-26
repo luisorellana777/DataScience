@@ -1,0 +1,97 @@
+> setwd("C:/Users/Luis/Documents/DataScience/Tesis/Calculo ARI/v15.9.10/stats")
+> 
+> data <- read.csv('maniobras-stats-v15.9.10.csv', sep=';')
+> left <- data[data$Hemisferio=="Left",]$mfARI
+> right <- data[data$Hemisferio=="Right",]$mfARI
+> shapiro.test(left)#normal
+
+	Shapiro-Wilk normality test
+
+data:  left
+W = 0.97201, p-value = 0.2361
+
+> shapiro.test(right)#normal
+
+	Shapiro-Wilk normality test
+
+data:  right
+W = 0.93172, p-value = 0.004275
+
+> hist(left)
+> hist(right)
+> hist(left)
+> t.test(left, right, alternative = "two.sided") #Los hemisferios son similares por qup-value > 0.05
+
+	Welch Two Sample t-test
+
+data:  left and right
+t = -0.082633, df = 105.49, p-value = 0.9343
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -0.3702856  0.3406559
+sample estimates:
+mean of x mean of y 
+ 5.092593  5.107407 
+
+> mfARI <- rowMeans(data.frame(left, right))
+> dat = data.frame("Maniobra" = data[data$Hemisferio=="Left",]$Maniobra, "mfARI" = mfARI)
+> 
+> fm = aov( dat$mfARI ~ dat$Maniobra, data = dat )
+> summary(fm)
+             Df Sum Sq Mean Sq F value Pr(>F)
+dat$Maniobra  2  0.791  0.3954   0.639  0.532
+Residuals    51 31.564  0.6189               
+> tuk <- TukeyHSD(fm)
+> plot (tuk)
+> boxplot(dat$mfARI ~ dat$Maniobra, 
++         main="Comparacion de Posiciones mfARI", 
++         col= rainbow(3), 
++         horizontal = TRUE)
+> tyres.aov<- aov(mfARI~Maniobra, dat)
+> class(tyres.aov)
+[1] "aov" "lm" 
+> summary(tyres.aov)
+            Df Sum Sq Mean Sq F value Pr(>F)
+Maniobra     2  0.791  0.3954   0.639  0.532
+Residuals   51 31.564  0.6189               
+> pairwise.t.test(dat$mfARI,dat$Maniobra,p.adjust.method = "none")
+
+	Pairwise comparisons using t tests with pooled SD 
+
+data:  dat$mfARI and dat$Maniobra 
+
+        ACOSTADO PIE 
+PIE     0.38     -   
+SENTADO 0.87     0.30
+
+P value adjustment method: none 
+> model = lm(mfARI ~ Maniobra, 
++            data=dat)
+> Anova(model, type="III")
+Error in Anova(model, type = "III") : could not find function "Anova"
+> summary(model)
+
+Call:
+lm(formula = mfARI ~ Maniobra, data = dat)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.3694 -0.5861 -0.1819  0.5951  1.6306 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      5.03611    0.18543  27.159   <2e-16 ***
+ManiobraPIE      0.23333    0.26224   0.890    0.378    
+ManiobraSENTADO -0.04167    0.26224  -0.159    0.874    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.7867 on 51 degrees of freedom
+Multiple R-squared:  0.02444,	Adjusted R-squared:  -0.01381 
+F-statistic: 0.6389 on 2 and 51 DF,  p-value: 0.532
+
+> boxplot(mfARI ~ Maniobra,
++         data = dat,
++         ylab="aam / height",
++         xlab="Location")
+> 
