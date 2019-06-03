@@ -35,10 +35,10 @@ def create_dataset(nombre_sujeto, nombre_postura):
     data_escalon = pd.read_csv(PATH_ESCALON)
     
     # normalize the dataset
-    scaler_VFSCd = MinMaxScaler(feature_range=(0, 1))
-    scaler_VFSCi = MinMaxScaler(feature_range=(0, 1))
-    scaler_PAMn = MinMaxScaler(feature_range=(0, 1))
-    scaler_escalon = MinMaxScaler(feature_range=(0, 1))
+    scaler_VFSCd = MinMaxScaler(feature_range=(-1, 1))
+    scaler_VFSCi = MinMaxScaler(feature_range=(-1, 1))
+    scaler_PAMn = MinMaxScaler(feature_range=(-1, 1))
+    scaler_escalon = MinMaxScaler(feature_range=(-1, 1))
     
     VFSCd = scaler_VFSCd.fit_transform(X.VFSCd.values.reshape((len(X.VFSCd.values), 1)))
     VFSCi = scaler_VFSCi.fit_transform(X.VFSCi.values.reshape((len(X.VFSCi.values), 1)))
@@ -117,7 +117,7 @@ def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimi
     print('epochs=%d, dropout=%.1f, activation=%s, optimization=%s neurons=%d, batch_size=%d, hidden_layers=%d:::::::::: RESULT=%.3f' % (epochs, dropout, activation, optimization, neurons, batch_size, hidden_layers, r))
     return r
 
-def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[65], optimization=["RMSprop"], activation=["tanh"], hidden_layers=[2], neurons=[10], dropout=[1.0]):
+def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[65], optimization=["RMSprop"], activation=["tanh"], hidden_layers=[3], neurons=[10], dropout=[0.9]):
     
     columnas = ['epochs','dropout','activation','optimization','neurons','batch_size','hidden_layers','RESULT']
     filas = len(batch_size) * len(epochs) * len(optimization) * len(activation) * len(hidden_layers) * len(neurons) * len(dropout)
@@ -248,7 +248,7 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
         activation = df.iat[row,2]
         hidden_layers = int(df.iat[row,6])
         neurons = int(df.iat[row,4])
-        #dropout = float(df.iat[row,1])
+        dropout = float(df.iat[row,1])
         result_r = float(df.iat[row,7])
         
         if hemisferio == "Izquierdo":
@@ -256,7 +256,7 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
         else:
             pregunta_seguir = "¿Seguir con el Otro Hemisferio (3)?\n"
 
-        for dropout in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
+        for dropouts in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
 
             for execution in range(1,100):
 
@@ -282,6 +282,7 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
                 if quedar == "1":
                     save_hidden_states(lstm_model, neurons, layer=0, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     save_hidden_states(lstm_model, neurons, layer=1, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
+                    save_hidden_states(lstm_model, neurons, layer=2, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     save_signal(scaler_VFSC.inverse_transform(output), sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     save_model(lstm_model, sujeto=sujeto, postura=postura, hemisferio=hemisferio)
                     #save_hidden_output(lstm_model, escalon, sujeto, postura, hemisferio)
@@ -379,7 +380,7 @@ def save_hidden_states(model, units, layer, sujeto, postura, hemisferio):
     writer.save()
 
 
-def run (sujeto, postura, proceso_escalon, hemisferio_derecho=True, hemisferio_izquierdo=True):
+def run (sujeto, postura, proceso_escalon = False, hemisferio_derecho=True, hemisferio_izquierdo=True):
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -390,8 +391,8 @@ def run (sujeto, postura, proceso_escalon, hemisferio_derecho=True, hemisferio_i
 
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
-    epochs = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
-    neurons = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+    epochs = [5,10,15,20,25,30,35,40,45,50,55,60,70,80,90,100]
+    neurons = [2,4,6,8,10,13,15,20,25]
 
     batch_size = []
     for i in range(1,train_PAM.shape[0]+1):
@@ -444,6 +445,8 @@ def run (sujeto, postura, proceso_escalon, hemisferio_derecho=True, hemisferio_i
         exists_1 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_1.csv")
         exists_2 = os.path.isfile(PATH_RESULTADO_CONTEXTO+"_2.csv")
         
+        best_balance = 0
+        
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
         if exists_1 == False and exists_2 == False:
@@ -475,49 +478,89 @@ def run (sujeto, postura, proceso_escalon, hemisferio_derecho=True, hemisferio_i
 seed(1)
 set_random_seed(2)
 
-"""
-run(sujeto='AP', postura='PIE', proceso_escalon=False, hemisferio_derecho=False)
+
+#run(sujeto='AP', postura='PIE', proceso_escalon=False, hemisferio_derecho=False)
 
 
-run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False, hemisferio_izquierdo=False)
-run(sujeto='AV', postura='PIE', proceso_escalon = False, hemisferio_derecho=False)
+#run(sujeto='AV', postura='ACOSTADO', proceso_escalon = False, hemisferio_izquierdo=False)
+
+#run(sujeto='AV', postura='PIE', proceso_escalon = False, hemisferio_derecho=False)
 
 
-run(sujeto='CC', postura='ACOSTADO', proceso_escalon = False, hemisferio_derecho=False)
-run(sujeto='CC', postura='PIE', proceso_escalon = False)
-run(sujeto='CC', postura='SENTADO', proceso_escalon = False, hemisferio_derecho=False)
+#run(sujeto='CC', postura='ACOSTADO', proceso_escalon = False, hemisferio_derecho=False)
 
-run(sujeto='CS', postura='ACOSTADO', proceso_escalon = False, hemisferio_izquierdo=False)
-
-run(sujeto='CS', postura='SENTADO', proceso_escalon = False)
-
-run(sujeto='DM', postura='ACOSTADO', proceso_escalon = False, hemisferio_derecho=False)
-
-run(sujeto='DM', postura='SENTADO', proceso_escalon = False)
+#run(sujeto='CC', postura='PIE', proceso_escalon = True)#falta emisferio ezquierdo
 
 
-run(sujeto='DS', postura='PIE', proceso_escalon = False, hemisferio_derecho=False)
+####################################################
+run(sujeto="AC", postura="ACOSTADO")
+run(sujeto="AC", postura="PIE")
+run(sujeto="AC", postura="SENTADO")
 
+run(sujeto='AP', postura='ACOSTADO')
+run(sujeto='AP', postura='PIE', hemisferio_izquierdo=False)
+run(sujeto='AP', postura='SENTADO')
 
+run(sujeto='AV', postura='ACOSTADO', hemisferio_derecho=False)
+run(sujeto='AV', postura='PIE', hemisferio_izquierdo=False)
+run(sujeto='AV', postura='SENTADO')
 
-run(sujeto='GP', postura='PIE', proceso_escalon = False, hemisferio_derecho=False)
+run(sujeto='CC', postura='ACOSTADO', hemisferio_izquierdo=False)
+run(sujeto='CC', postura='SENTADO')
 
+run(sujeto='CS', postura='ACOSTADO')
+run(sujeto='CS', postura='PIE')
+run(sujeto='CS', postura='SENTADO')
+
+run(sujeto='DM', postura='ACOSTADO')
+run(sujeto='DM', postura='PIE')
+run(sujeto='DM', postura='SENTADO')
+
+run(sujeto='DS', postura='ACOSTADO')
+run(sujeto='DS', postura='PIE')
+run(sujeto='DS', postura='SENTADO')
+
+run(sujeto='GP', postura='ACOSTADO')
+run(sujeto='GP', postura='PIE')
+run(sujeto='GP', postura='SENTADO')
              
-run(sujeto='HF', postura='ACOSTADO', proceso_escalon = False)
+run(sujeto='HF', postura='ACOSTADO')
+run(sujeto='HF', postura='PIE')
+run(sujeto='HF', postura='SENTADO')
 
+run(sujeto='HS', postura='ACOSTADO')
+run(sujeto='HS', postura='PIE')
+run(sujeto='HS', postura='SENTADO')
 
-run(sujeto='HS', postura='ACOSTADO', proceso_escalon = False, hemisferio_derecho=False)# ----> PENDIENTE
+run(sujeto='IH', postura='ACOSTADO')
+run(sujeto='IH', postura='PIE')
+run(sujeto='IH', postura='SENTADO')
 
-run(sujeto='MM', postura='ACOSTADO', proceso_escalon = False, hemisferio_derecho=False)
-"""
-run(sujeto='MM', postura='SENTADO', proceso_escalon = False, hemisferio_derecho=False)
+run(sujeto='MM', postura='ACOSTADO')
+run(sujeto='MM', postura='PIE')
+run(sujeto='MM', postura='SENTADO')
 
+run(sujeto='MR', postura='ACOSTADO')
+run(sujeto='MR', postura='PIE')
+run(sujeto='MR', postura='SENTADO')
 
+run(sujeto='MV', postura='ACOSTADO')
+run(sujeto='MV', postura='PIE')
+run(sujeto='MV', postura='SENTADO')
 
-run(sujeto='PC', postura='ACOSTADO', proceso_escalon = False, hemisferio_izquierdo=False)
+run(sujeto='ND', postura='ACOSTADO')
+run(sujeto='ND', postura='PIE')
+run(sujeto='ND', postura='SENTADO')
 
+run(sujeto='PC', postura='ACOSTADO')
+run(sujeto='PC', postura='PIE')
+run(sujeto='PC', postura='SENTADO')
 
-run(sujeto='RO', postura='ACOSTADO', proceso_escalon = False, hemisferio_izquierdo=False)
+run(sujeto='RO', postura='ACOSTADO')
+run(sujeto='RO', postura='PIE')
+run(sujeto='RO', postura='SENTADO')
 
-
+run(sujeto='VT', postura='ACOSTADO')
+run(sujeto='VT', postura='PIE')
+run(sujeto='VT', postura='SENTADO')
 
