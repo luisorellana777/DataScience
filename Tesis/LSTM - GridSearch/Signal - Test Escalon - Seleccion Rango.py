@@ -1,8 +1,11 @@
 import os
 #FORZAR USO DE CPU
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
+import time
+from math import sqrt, log, exp
+import math
 import pandas as pd
 import numpy
 import matplotlib.pyplot as plt
@@ -19,15 +22,17 @@ import plotly
 from numpy.random import seed
 from tensorflow import set_random_seed
 import tensorflow as tf
+from functools import reduce
 
 
 
-CPU_USAGE = 1
-GPU_USAGE = 0
+CPU_USAGE = 7
+GPU_USAGE = 1
 PATH_SUJETOS = ("C:/Users/Luis/Documents/DataScience/Tesis/Datos/SUJETOS/%s/%s-%s-VE.csv")
 PATH_ESCALON = ("C:/Users/Luis/Documents/DataScience/Tesis/Datos/ESCALON_PRESION/ESCALON.csv")
 PATH_RESULTADO = ("C:/Users/Luis/Documents/DataScience/Tesis/Resultados/Escalon/%s")
 PATH_RESULTADO_ESCALON = (PATH_RESULTADO%("%s/%s_%s"))
+OPTIMUM_NEURONS = 10
 
 def create_dataset(nombre_sujeto, nombre_postura):
 
@@ -66,6 +71,7 @@ def create_dataset(nombre_sujeto, nombre_postura):
 # fit an LSTM network to training data
 def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout):
     
+    use_cpu_gpu()
     ret_seq = False
     if hidden_layers > 1:
         ret_seq = True
@@ -75,14 +81,29 @@ def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidde
     for i in range (hidden_layers-1):
         if i == (hidden_layers-2):
             ret_seq = False
+            neurons = OPTIMUM_NEURONS
         model.add(LSTM(neurons, return_sequences=ret_seq, stateful = True, recurrent_activation=activation, recurrent_dropout=dropout))
     model.add(Dense(trainX.shape[1], activation=activation))
 
-    model.compile(loss='mean_squared_error', optimizer=optimization)
+    model.compile(loss=correlation_coefficient_loss, optimizer=optimization)
     for i in range(epochs):
-        model.fit(trainX, trainY, epochs=1, batch_size=batch_size, verbose=0, shuffle=False)
+        model.fit(trainX, trainY, epochs=1, batch_size=batch_size, verbose=2, shuffle=False)
         model.reset_states()
     return model
+
+from keras import backend as K
+def correlation_coefficient_loss(y_true, y_pred):
+    x = y_true
+    y = y_pred
+    mx = K.mean(x)
+    my = K.mean(y)
+    xm, ym = x-mx, y-my
+    r_num = K.sum(tf.multiply(xm,ym))
+    r_den = K.sqrt(tf.multiply(K.sum(K.square(xm)), K.sum(K.square(ym))))
+    r = r_num / r_den
+
+    r = K.maximum(K.minimum(r, 1.0), -1.0)
+    return ((1 - K.square(r))*-1)+1
 
 #Evaluate the Model
 def evaluate(model, X, Y, batch_size):
@@ -102,20 +123,52 @@ def evaluate_stair(model, Escalon, batch_size):
     
     return output
 
+#Transfomracion de Fisher
+def fisher_transform(r):
+    z = 0.5*log((1+r)/(1-r))
+    return z
+
+def inverse_fisher_transform(z):
+    r = (exp(2*z)-1)/(exp(2*z)+1)
+    return r
+
 # run a repeated experiment
 def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout):
     # run experiment
+    lista_z = list()
+    repetir_error = 0
+    i = 1
+    del_level_hyp = False
+    while i <= repeats:
+        # fit the model
+        lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
+        # report performance
+        r = evaluate(lstm_model, testX, testY, batch_size)
 
-    # fit the model
-    lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
-    # report performance
-    r = evaluate(lstm_model, testX, testY, batch_size)
+        if math.isnan(r) and repetir_error < 3:
+            repetir_error = repetir_error + 1
+            if repetir_error == 3:
+                del_level_hyp = True
+                break
+        else:
+            if repetir_error != 3:
+                lista_z.append(fisher_transform(r))
+            repetir_error = 0
+            i = i + 1
 
-    K.clear_session()
-    del lstm_model
-    gc.collect()
-    print('epochs=%d, dropout=%.1f, activation=%s, optimization=%s neurons=%d, batch_size=%d, hidden_layers=%d:::::::::: RESULT=%.3f' % (epochs, dropout, activation, optimization, neurons, batch_size, hidden_layers, r))
-    return r
+        K.clear_session()
+        del lstm_model
+        gc.collect()
+
+    if del_level_hyp:
+        mean_z = float('nan')
+        mean_corr = float('nan')
+    else:
+        mean_z = reduce(lambda x, y: x + y, lista_z) / len(lista_z)
+        mean_corr = inverse_fisher_transform(mean_z)
+
+    print('epochs=%d, dropout=%.1f, activation=%s, optimization=%s neurons=%d, batch_size=%d, hidden_layers=%d:::::::::: RESULT=%.3f' % (epochs, dropout, activation, optimization, neurons, batch_size, hidden_layers, mean_corr))
+    return mean_corr
 
 def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[65], optimization=["RMSprop"], activation=["tanh"], hidden_layers=[3], neurons=[10], dropout=[0.9]):
     
@@ -123,7 +176,7 @@ def run_experiment(trainX, trainY, testX, testY, batch_size=[1], epochs=[65], op
     filas = len(batch_size) * len(epochs) * len(optimization) * len(activation) * len(hidden_layers) * len(neurons) * len(dropout)
     results = numpy.chararray((filas,8), itemsize=20, unicode=True)
     row = 0
-    repeats = 10
+    repeats = 5
     
     for b in batch_size:
         for e in epochs:
@@ -231,15 +284,16 @@ def plotting_mathplot(escalon, output, batch_size, epochs, optimization, activat
 def use_cpu_gpu():
     config = tf.ConfigProto(intra_op_parallelism_threads=10,
                             inter_op_parallelism_threads=10, 
-                            allow_soft_placement=True,
                             device_count = {'CPU' : CPU_USAGE,
                                             'GPU' : GPU_USAGE}
                            )
     config.gpu_options.allow_growth = True
+    config.gpu_options.per_process_gpu_memory_fraction = 0.9
+    #config.gpu_options.allow_growth = True
     session = tf.Session(config=config)
     K.set_session(session)
 
-def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
+def apply_stair(df, trainX, trainY, testX, testY, escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
 
     for row in range(df.shape[0]):#Cantidad de registros en el dataframe resultados
         batch_size = int(df.iat[row,5])
@@ -275,7 +329,9 @@ def apply_stair(df, trainX, trainY, escalon, scaler_VFSC, scaler_escalon, sujeto
 
                 output = evaluate_stair(lstm_model, escalon, batch_size)
 
-                plotting_mathplot(escalon, output, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout, result_r)
+                r = evaluate(lstm_model, testX, testY, batch_size)
+
+                plotting_mathplot(escalon, output, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout, r)
 
                 quedar = input("¿Te quedas con esta? \nSi(1) \nNo(0) \n")
             
@@ -385,20 +441,27 @@ def run (sujeto, postura, proceso_escalon = False, hemisferio_derecho=True, hemi
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
+    
+
     path = PATH_RESULTADO%(sujeto)
     if not os.path.exists(path):
         os.makedirs(path)
 
     train_PAM, train_VFSCd, train_VFSCi, test_PAM, test_VFSCd, test_VFSCi, Escalon, scaler_VFSCd, scaler_VFSCi, scaler_escalon = create_dataset(sujeto, postura)
 
-    epochs = [5,10,15,20,25,30,35,40,45,50,55,60,70,80,90,100]
-    neurons = [2,4,6,8,10,13,15,20,25]
-
+    activation = ['softplus','sigmoid', 'hard_sigmoid']
+    neurons = [5,10,15,20,30,40]
+    hidden_layers = [3, 4, 5]
+    dropout = [0.6, 0.7, 0.8, 0.9]
+    optimization = ['RMSprop']
+    epochs = [10]
+    batch_size = [198]
+    '''
     batch_size = []
     for i in range(1,train_PAM.shape[0]+1):
         if (train_PAM.shape[0]%i)==0:
             batch_size.append(199)
-    
+    '''
     if hemisferio_derecho == True:
 
         hemisferio = "Derecho"
@@ -413,12 +476,12 @@ def run (sujeto, postura, proceso_escalon = False, hemisferio_derecho=True, hemi
             ################################################################################### Balance 1
             print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Derecho')
 
-            df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, epochs=epochs, neurons=neurons)
+            df_1 = run_experiment(train_PAM, train_VFSCd, test_PAM, test_VFSCd, batch_size=batch_size, epochs=epochs, optimization=optimization, activation=activation, hidden_layers=hidden_layers, neurons=neurons, dropout=dropout)
 
             ################################################################################### Balance 2
             print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Derecho')
 
-            df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, epochs=epochs, neurons=neurons)
+            df_2 = run_experiment(test_PAM, test_VFSCd, train_PAM, train_VFSCd, batch_size=batch_size, epochs=epochs, optimization=optimization, activation=activation, hidden_layers=hidden_layers, neurons=neurons, dropout=dropout)
 
             df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
 
@@ -426,13 +489,13 @@ def run (sujeto, postura, proceso_escalon = False, hemisferio_derecho=True, hemi
 
             df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_1.csv", dtype='S')
 
-            apply_stair(df, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
+            apply_stair(df, train_PAM, train_VFSCd, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
 
         elif (best_balance == 2 or exists_2 == True) and proceso_escalon == True:
 
             df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_2.csv", dtype='S')
 
-            apply_stair(df, test_PAM, test_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
+            apply_stair(df, test_PAM, test_VFSCd, train_PAM, train_VFSCd, Escalon, scaler_VFSCd, scaler_escalon, sujeto, postura, hemisferio)
     
     ########################################################################################## HEMISFERIO IZQUIERDO
     ################################################################################### Balance 1
@@ -450,12 +513,12 @@ def run (sujeto, postura, proceso_escalon = False, hemisferio_derecho=True, hemi
         print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 1, Emisferio: Izquierdo')
 
         if exists_1 == False and exists_2 == False:
-            df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, epochs=epochs, neurons=neurons)
+            df_1 = run_experiment(train_PAM, train_VFSCi, test_PAM, test_VFSCi, batch_size=batch_size, epochs=epochs, optimization=optimization, activation=activation, hidden_layers=hidden_layers, neurons=neurons, dropout=dropout)
 
             ################################################################################### Balance 2
             print('++++++++++++++++++++++++++++++++++++++ Sujeto: ' + sujeto + ' Posicion: ' + postura + ' Balance: 2, Emisferio: Izquierdo')
 
-            df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, epochs=epochs, neurons=neurons)
+            df_2 = run_experiment(test_PAM, test_VFSCi, train_PAM, train_VFSCi, batch_size=batch_size, epochs=epochs, optimization=optimization, activation=activation, hidden_layers=hidden_layers, neurons=neurons, dropout=dropout)
 
             df, best_balance = best_model(df_1, df_2, PATH_RESULTADO_CONTEXTO)
 
@@ -465,13 +528,13 @@ def run (sujeto, postura, proceso_escalon = False, hemisferio_derecho=True, hemi
 
             df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_1.csv")
 
-            apply_stair(df, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
+            apply_stair(df, train_PAM, train_VFSCi, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
 
         elif (best_balance == 2 or exists_2 == True) and proceso_escalon == True:
 
             df = pd.read_csv(PATH_RESULTADO_CONTEXTO+"_2.csv")
 
-            apply_stair(df, test_PAM, test_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
+            apply_stair(df, test_PAM, test_VFSCi, train_PAM, train_VFSCi, Escalon, scaler_VFSCi, scaler_escalon, sujeto, postura, hemisferio)
 
 
 #Repitable Experiment
@@ -493,74 +556,10 @@ set_random_seed(2)
 
 
 ####################################################
-run(sujeto="AC", postura="ACOSTADO")
-run(sujeto="AC", postura="PIE")
-run(sujeto="AC", postura="SENTADO")
 
-run(sujeto='AP', postura='ACOSTADO')
-run(sujeto='AP', postura='PIE', hemisferio_izquierdo=False)
-run(sujeto='AP', postura='SENTADO')
+#take time
+t0 = time.time()
 
-run(sujeto='AV', postura='ACOSTADO', hemisferio_derecho=False)
-run(sujeto='AV', postura='PIE', hemisferio_izquierdo=False)
-run(sujeto='AV', postura='SENTADO')
+run(sujeto='DM', postura='PIE', proceso_escalon = True)
 
-run(sujeto='CC', postura='ACOSTADO', hemisferio_izquierdo=False)
-run(sujeto='CC', postura='SENTADO')
-
-run(sujeto='CS', postura='ACOSTADO')
-run(sujeto='CS', postura='PIE')
-run(sujeto='CS', postura='SENTADO')
-
-run(sujeto='DM', postura='ACOSTADO')
-run(sujeto='DM', postura='PIE')
-run(sujeto='DM', postura='SENTADO')
-
-run(sujeto='DS', postura='ACOSTADO')
-run(sujeto='DS', postura='PIE')
-run(sujeto='DS', postura='SENTADO')
-
-run(sujeto='GP', postura='ACOSTADO')
-run(sujeto='GP', postura='PIE')
-run(sujeto='GP', postura='SENTADO')
-             
-run(sujeto='HF', postura='ACOSTADO')
-run(sujeto='HF', postura='PIE')
-run(sujeto='HF', postura='SENTADO')
-
-run(sujeto='HS', postura='ACOSTADO')
-run(sujeto='HS', postura='PIE')
-run(sujeto='HS', postura='SENTADO')
-
-run(sujeto='IH', postura='ACOSTADO')
-run(sujeto='IH', postura='PIE')
-run(sujeto='IH', postura='SENTADO')
-
-run(sujeto='MM', postura='ACOSTADO')
-run(sujeto='MM', postura='PIE')
-run(sujeto='MM', postura='SENTADO')
-
-run(sujeto='MR', postura='ACOSTADO')
-run(sujeto='MR', postura='PIE')
-run(sujeto='MR', postura='SENTADO')
-
-run(sujeto='MV', postura='ACOSTADO')
-run(sujeto='MV', postura='PIE')
-run(sujeto='MV', postura='SENTADO')
-
-run(sujeto='ND', postura='ACOSTADO')
-run(sujeto='ND', postura='PIE')
-run(sujeto='ND', postura='SENTADO')
-
-run(sujeto='PC', postura='ACOSTADO')
-run(sujeto='PC', postura='PIE')
-run(sujeto='PC', postura='SENTADO')
-
-run(sujeto='RO', postura='ACOSTADO')
-run(sujeto='RO', postura='PIE')
-run(sujeto='RO', postura='SENTADO')
-
-run(sujeto='VT', postura='ACOSTADO')
-run(sujeto='VT', postura='PIE')
-run(sujeto='VT', postura='SENTADO')
-
+print ('###################################################################################',time.time() - t0, "segundos tardo")
