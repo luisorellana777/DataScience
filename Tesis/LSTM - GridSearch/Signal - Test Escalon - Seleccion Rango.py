@@ -70,8 +70,24 @@ def create_dataset(nombre_sujeto, nombre_postura):
 
 # fit an LSTM network to training data
 def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout):
-    
     use_cpu_gpu()
+    
+    ret_seq = False
+    model = Sequential()
+    model.add(LSTM(64, return_sequences=True, input_shape=(198, 1)))
+    model.add(LSTM(128, return_sequences=True))
+    model.add(LSTM(256, return_sequences=True))
+    model.add(LSTM(128, return_sequences=True))
+    model.add(LSTM(64, return_sequences=True))
+    model.add(LSTM(2, return_sequences=True)) 
+
+    model.compile(loss='mse', optimizer='adam')
+    model.fit(trainX[0:198], trainY[0:198], epochs=1000, batch_size=1, verbose=2, validation_data=(trainX,trainY))  
+    return model
+
+def fit_lstm2(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout):
+    use_cpu_gpu()
+    
     ret_seq = False
     if hidden_layers > 1:
         ret_seq = True
@@ -81,13 +97,13 @@ def fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidde
     for i in range (hidden_layers-1):
         if i == (hidden_layers-2):
             ret_seq = False
-            neurons = OPTIMUM_NEURONS
+            #neurons = OPTIMUM_NEURONS
         model.add(LSTM(neurons, return_sequences=ret_seq, stateful = True, recurrent_activation=activation, recurrent_dropout=dropout))
     model.add(Dense(trainX.shape[1], activation=activation))
 
-    model.compile(loss=correlation_coefficient_loss, optimizer=optimization)
+    model.compile(loss='mean_squared_error', optimizer=optimization)
     for i in range(epochs):
-        model.fit(trainX, trainY, epochs=1, batch_size=batch_size, verbose=2, shuffle=False)
+        model.fit(trainX, trainY, epochs=1, batch_size=batch_size, verbose=0, shuffle=False)
         model.reset_states()
     return model
 
@@ -107,7 +123,15 @@ def correlation_coefficient_loss(y_true, y_pred):
 
 #Evaluate the Model
 def evaluate(model, X, Y, batch_size):
+    output = model.predict(X)
+    
+    # invert data transforms on forecast
+    # report performance
+    rmse = stats.pearsonr(Y[:,0], output[:,0])
+    
+    return rmse[0]
 
+def evaluate2(model, X, Y, batch_size):
     output = model.predict(X, batch_size=batch_size)
     
     # invert data transforms on forecast
@@ -118,7 +142,6 @@ def evaluate(model, X, Y, batch_size):
 
     #Evaluate the Model
 def evaluate_stair(model, Escalon, batch_size):
-
     output = model.predict(Escalon, batch_size=batch_size)
     
     return output
@@ -282,7 +305,7 @@ def plotting_mathplot(escalon, output, batch_size, epochs, optimization, activat
     plt.show()
     
 def use_cpu_gpu():
-    config = tf.ConfigProto(intra_op_parallelism_threads=10,
+    config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=10,
                             inter_op_parallelism_threads=10, 
                             device_count = {'CPU' : CPU_USAGE,
                                             'GPU' : GPU_USAGE}
@@ -290,7 +313,7 @@ def use_cpu_gpu():
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.9
     #config.gpu_options.allow_growth = True
-    session = tf.Session(config=config)
+    session = tf.compat.v1.Session(config=config)
     K.set_session(session)
 
 def apply_stair(df, trainX, trainY, testX, testY, escalon, scaler_VFSC, scaler_escalon, sujeto, postura, hemisferio):
@@ -560,6 +583,6 @@ set_random_seed(2)
 #take time
 t0 = time.time()
 
-run(sujeto='DM', postura='PIE', proceso_escalon = True)
+run(sujeto='AC', postura='ACOSTADO', proceso_escalon = True)
 
 print ('###################################################################################',time.time() - t0, "segundos tardo")

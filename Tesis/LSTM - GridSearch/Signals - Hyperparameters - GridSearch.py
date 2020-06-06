@@ -29,7 +29,7 @@ from scipy import stats
 from numpy.random import seed
 from tensorflow import set_random_seed
 
-CPU_USAGE = 0
+CPU_USAGE = 7
 GPU_USAGE = 1
 
 def create_dataset(nombre_sujeto, nombre_postura):
@@ -140,7 +140,7 @@ def experiment(trainX, trainY, testX, testY, repeats, batch_size, epochs, optimi
     del_level_hyp = False
     while i <= repeats:
         # fit the model
-        #use_cpu_gpu()
+        use_cpu_gpu()
         lstm_model = fit_lstm(trainX, trainY, batch_size, epochs, optimization, activation, hidden_layers, neurons, dropout)
         # report performance
         r = evaluate(lstm_model, testX, testY, batch_size)[0]
@@ -367,19 +367,19 @@ seed(1)
 set_random_seed(2)
 
 run_rango(sujeto='AC', postura='ACOSTADO', balance=1) 
-run_rango(sujeto='AC', postura='ACOSTADO', balance=2) 
+#run_rango(sujeto='AC', postura='ACOSTADO', balance=2) 
 
-run_rango(sujeto='DM', postura='PIE', balance=1) 
-run_rango(sujeto='DM', postura='PIE', balance=2) 
+#run_rango(sujeto='DM', postura='PIE', balance=1) 
+#run_rango(sujeto='DM', postura='PIE', balance=2) 
 
-run_rango(sujeto='PC', postura='SENTADO', balance=1) 
-run_rango(sujeto='PC', postura='SENTADO', balance=2) 
+#run_rango(sujeto='PC', postura='SENTADO', balance=1) 
+#run_rango(sujeto='PC', postura='SENTADO', balance=2) 
 
-run_rango(sujeto='AV', postura='ACOSTADO', balance=1) 
-run_rango(sujeto='AV', postura='ACOSTADO', balance=2) 
+#run_rango(sujeto='AV', postura='ACOSTADO', balance=1) 
+#run_rango(sujeto='AV', postura='ACOSTADO', balance=2) 
 
-run_rango(sujeto='CC', postura='PIE', balance=1) 
-run_rango(sujeto='CC', postura='PIE', balance=2) 
+#run_rango(sujeto='CC', postura='PIE', balance=1) 
+#run_rango(sujeto='CC', postura='PIE', balance=2) 
 
-run_rango(sujeto='CS', postura='SENTADO', balance=1) 
-run_rango(sujeto='CS', postura='SENTADO', balance=2) 
+#run_rango(sujeto='CS', postura='SENTADO', balance=1) 
+#run_rango(sujeto='CS', postura='SENTADO', balance=2) 
